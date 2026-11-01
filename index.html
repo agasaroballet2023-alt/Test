@@ -28,10 +28,9 @@
     <!-- Firebase SDK Imports -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Configuration & Initialization
         const firebaseConfig = typeof __firebase_config !== 'undefined' 
             ? JSON.parse(__firebase_config) 
             : {
@@ -47,88 +46,52 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'agasaro-ballet-app';
-        const publicDataPath = `artifacts/${appId}/public/data`;
+        // Public shared collection path to avoid permission rule blocks
+        const publicCollection = 'public_agasaro_shared_db';
+        const docId = 'global_data';
 
         window.firebaseDb = db;
         window.firebaseAuth = auth;
-        window.publicDataPath = publicDataPath;
 
-        // Initialize Authentication & Realtime Firestore Sync
         async function initCloudSync() {
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                await signInAnonymously(auth);
             } catch (err) {
                 console.warn("Auth fallback mode:", err);
             }
 
-            // Real-time listener for Settings (Branding, Contact, Ad Poster)
-            const settingsDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'app_settings', 'config');
-            onSnapshot(settingsDocRef, (snapshot) => {
+            const sharedDocRef = doc(db, publicCollection, docId);
+            
+            onSnapshot(sharedDocRef, (snapshot) => {
                 if (snapshot.exists()) {
                     const data = snapshot.data();
-                    if (data.email) { window.TROUPE_EMAIL = data.email; }
-                    if (data.phone) { window.phoneNumber = data.phone; }
-                    if (data.title) { window.troupeTitle = data.title; }
-                    if (data.subtitle) { window.troupeSubtitle = data.subtitle; }
-                    if (data.logo !== undefined) { window.customLogo = data.logo; }
-                    if (data.adPoster !== undefined) { window.adPosterBase64 = data.adPoster; }
-                    if (data.adEnabled !== undefined) { window.adPosterEnabled = data.adEnabled; }
+                    if (data.email) { window.TROUPE_EMAIL = data.email; localStorage.setItem('uruyange_email', data.email); }
+                    if (data.phone) { window.phoneNumber = data.phone; localStorage.setItem('uruyange_phone', data.phone); }
+                    if (data.title) { window.troupeTitle = data.title; localStorage.setItem('uruyange_title', data.title); }
+                    if (data.subtitle) { window.troupeSubtitle = data.subtitle; localStorage.setItem('uruyange_subtitle', data.subtitle); }
+                    if (data.logo !== undefined) { window.customLogo = data.logo; if(data.logo) localStorage.setItem('uruyange_logo', data.logo); else localStorage.removeItem('uruyange_logo'); }
+                    if (data.adPoster !== undefined) { window.adPosterBase64 = data.adPoster; if(data.adPoster) localStorage.setItem('agasaro_ad_poster', data.adPoster); else localStorage.removeItem('agasaro_ad_poster'); }
+                    if (data.adEnabled !== undefined) { window.adPosterEnabled = data.adEnabled; localStorage.setItem('agasaro_ad_enabled', data.adEnabled); }
+                    
+                    if (data.slides) { window.slides = data.slides; localStorage.setItem('uruyange_slides', JSON.stringify(data.slides)); if(window.renderSlides) window.renderSlides(); if(window.renderAdminSlidesList) window.renderAdminSlidesList(); }
+                    if (data.videos) { window.videos = data.videos; localStorage.setItem('uruyange_videos', JSON.stringify(data.videos)); if(window.renderYouTubeGrid) window.renderYouTubeGrid(); if(window.renderAdminVideosList) window.renderAdminVideosList(); }
+                    if (data.calendarEvents) { window.calendarEvents = data.calendarEvents; localStorage.setItem('agasaro_calendar_events', JSON.stringify(data.calendarEvents)); if(window.renderSmallCalendar) window.renderSmallCalendar(); }
+                    if (data.enrollments) { window.paidEnrollments = data.enrollments; localStorage.setItem('agasaro_enrollment_records', JSON.stringify(data.enrollments)); if(window.updateAdminCounter) window.updateAdminCounter(); }
 
-                    window.updateBrandingUI();
-                    window.updateContactUI();
-                    window.renderAdminAdUI();
+                    if (window.updateBrandingUI) window.updateBrandingUI();
+                    if (window.updateContactUI) window.updateContactUI();
+                    if (window.renderAdminAdUI) window.renderAdminAdUI();
                 }
             }, (error) => {
-                console.error("Settings sync error:", error);
-            });
-
-            // Real-time listener for Dynamic Content Collections
-            const contentDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'app_content', 'main');
-            onSnapshot(contentDocRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    const data = snapshot.data();
-                    if (data.slides) { window.slides = data.slides; window.renderSlides(); window.renderAdminSlidesList(); }
-                    if (data.videos) { window.videos = data.videos; window.renderYouTubeGrid(); window.renderAdminVideosList(); }
-                    if (data.calendarEvents) { window.calendarEvents = data.calendarEvents; window.renderSmallCalendar(); }
-                }
-            }, (error) => {
-                console.error("Content sync error:", error);
-            });
-
-            // Real-time listener for Public Enrollments
-            const enrollmentsDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'enrollments', 'records');
-            onSnapshot(enrollmentsDocRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    const data = snapshot.data();
-                    if (data.list) { window.paidEnrollments = data.list; window.updateAdminCounter(); }
-                }
-            }, (error) => {
-                console.error("Enrollments sync error:", error);
+                console.warn("Cloud sync listening notice:", error.message);
             });
         }
 
-        // Global Firestore Save Helpers
-        window.saveCloudSettings = async function(settingsData) {
-            if (!auth.currentUser) return;
-            const settingsDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'app_settings', 'config');
-            await setDoc(settingsDocRef, settingsData, { merge: true });
-        };
-
-        window.saveCloudContent = async function(contentData) {
-            if (!auth.currentUser) return;
-            const contentDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'app_content', 'main');
-            await setDoc(contentDocRef, contentData, { merge: true });
-        };
-
-        window.saveCloudEnrollments = async function(enrollmentsList) {
-            if (!auth.currentUser) return;
-            const enrollmentsDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'enrollments', 'records');
-            await setDoc(enrollmentsDocRef, { list: enrollmentsList }, { merge: true });
+        window.saveToCloud = async function(updateData) {
+            try {
+                const sharedDocRef = doc(db, publicCollection, docId);
+                await setDoc(sharedDocRef, updateData, { merge: true });
+            } catch(e) { console.warn("Cloud save warning:", e); }
         };
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -1286,8 +1249,8 @@
                     localStorage.setItem('agasaro_ad_poster', adPosterBase64);
                     localStorage.setItem('agasaro_ad_enabled', 'true');
                     
-                    if (window.saveCloudSettings) {
-                        window.saveCloudSettings({ adPoster: adPosterBase64, adEnabled: true });
+                    if (window.saveToCloud) {
+                        window.saveToCloud({ adPoster: adPosterBase64, adEnabled: true });
                     }
                     
                     renderAdminAdUI();
@@ -1306,8 +1269,8 @@
             adPosterEnabled = !adPosterEnabled;
             localStorage.setItem('agasaro_ad_enabled', adPosterEnabled ? 'true' : 'false');
             
-            if (window.saveCloudSettings) {
-                window.saveCloudSettings({ adEnabled: adPosterEnabled });
+            if (window.saveToCloud) {
+                window.saveToCloud({ adEnabled: adPosterEnabled });
             }
 
             renderAdminAdUI();
@@ -1319,10 +1282,10 @@
             adPosterEnabled = false;
             localStorage.removeItem('agasaro_ad_poster');
             localStorage.removeItem('agasaro_ad_enabled');
-            document.getElementById('admin-ad-file').value = '';
+            document.getElementById('admin-ad-file').value.trim();
 
-            if (window.saveCloudSettings) {
-                window.saveCloudSettings({ adPoster: null, adEnabled: false });
+            if (window.saveToCloud) {
+                window.saveToCloud({ adPoster: null, adEnabled: false });
             }
 
             renderAdminAdUI();
@@ -1455,8 +1418,8 @@
             calendarEvents[dateInput].push(eventInput);
             localStorage.setItem('agasaro_calendar_events', JSON.stringify(calendarEvents));
             
-            if (window.saveCloudContent) {
-                window.saveCloudContent({ calendarEvents });
+            if (window.saveToCloud) {
+                window.saveToCloud({ calendarEvents });
             }
 
             document.getElementById('admin-cal-event-input').value = '';
@@ -1473,8 +1436,8 @@
                 }
                 localStorage.setItem('agasaro_calendar_events', JSON.stringify(calendarEvents));
                 
-                if (window.saveCloudContent) {
-                    window.saveCloudContent({ calendarEvents });
+                if (window.saveToCloud) {
+                    window.saveToCloud({ calendarEvents });
                 }
 
                 renderSmallCalendar();
@@ -1540,8 +1503,8 @@
             paidEnrollments.unshift(formData);
             localStorage.setItem('agasaro_enrollment_records', JSON.stringify(paidEnrollments));
             
-            if (window.saveCloudEnrollments) {
-                window.saveCloudEnrollments(paidEnrollments);
+            if (window.saveToCloud) {
+                window.saveToCloud({ enrollments: paidEnrollments });
             }
 
             updateAdminCounter();
@@ -1656,8 +1619,8 @@
                 localStorage.setItem('uruyange_phone', phoneNumber);
             }
 
-            if (window.saveCloudSettings) {
-                window.saveCloudSettings({ email: TROUPE_EMAIL, phone: phoneNumber });
+            if (window.saveToCloud) {
+                window.saveToCloud({ email: TROUPE_EMAIL, phone: phoneNumber });
             }
 
             updateContactUI();
@@ -1735,8 +1698,8 @@
             videos.unshift({ id: ytId, title, ageGroup });
             localStorage.setItem('uruyange_videos', JSON.stringify(videos));
 
-            if (window.saveCloudContent) {
-                window.saveCloudContent({ videos });
+            if (window.saveToCloud) {
+                window.saveToCloud({ videos });
             }
 
             document.getElementById('admin-yt-url').value = '';
@@ -1750,8 +1713,8 @@
             videos.splice(idx, 1);
             localStorage.setItem('uruyange_videos', JSON.stringify(videos));
 
-            if (window.saveCloudContent) {
-                window.saveCloudContent({ videos });
+            if (window.saveToCloud) {
+                window.saveToCloud({ videos });
             }
 
             renderYouTubeGrid();
@@ -1812,8 +1775,8 @@
                     slides.push({ url: base64, title, description: desc });
                     localStorage.setItem('uruyange_slides', JSON.stringify(slides));
 
-                    if (window.saveCloudContent) {
-                        window.saveCloudContent({ slides });
+                    if (window.saveToCloud) {
+                        window.saveToCloud({ slides });
                     }
 
                     fileInput.value = '';
@@ -1831,8 +1794,8 @@
             slides.splice(idx, 1);
             localStorage.setItem('uruyange_slides', JSON.stringify(slides));
 
-            if (window.saveCloudContent) {
-                window.saveCloudContent({ slides });
+            if (window.saveToCloud) {
+                window.saveToCloud({ slides });
             }
 
             renderSlides();
@@ -1888,16 +1851,16 @@
                     customLogo = base64Logo;
                     localStorage.setItem('uruyange_logo', customLogo);
                     
-                    if (window.saveCloudSettings) {
-                        window.saveCloudSettings({ title: troupeTitle, subtitle: troupeSubtitle, logo: customLogo });
+                    if (window.saveToCloud) {
+                        window.saveToCloud({ title: troupeTitle, subtitle: troupeSubtitle, logo: customLogo });
                     }
 
                     updateBrandingUI();
                     showToast("Branding & Logo updated & synced!");
                 });
             } else {
-                if (window.saveCloudSettings) {
-                    window.saveCloudSettings({ title: troupeTitle, subtitle: troupeSubtitle });
+                if (window.saveToCloud) {
+                    window.saveToCloud({ title: troupeTitle, subtitle: troupeSubtitle });
                 }
                 updateBrandingUI();
                 showToast("Branding updated & synced!");
@@ -1908,8 +1871,8 @@
             customLogo = null;
             localStorage.removeItem('uruyange_logo');
 
-            if (window.saveCloudSettings) {
-                window.saveCloudSettings({ logo: null });
+            if (window.saveToCloud) {
+                window.saveToCloud({ logo: null });
             }
 
             updateBrandingUI();
