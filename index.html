@@ -25,82 +25,95 @@
         })();
     </script>
 
-    <!-- Firebase SDK Imports -->
+    <!-- FIREBASE SDK & REAL-TIME CLOUD SYNC CONFIGURATION -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = typeof __firebase_config !== 'undefined' 
-            ? JSON.parse(__firebase_config) 
-            : {
-                apiKey: "AIzaSyDemoConfigKeyForTestingOnly12345",
-                authDomain: "agasaro-ballet.firebaseapp.com",
-                projectId: "agasaro-ballet",
-                storageBucket: "agasaro-ballet.appspot.com",
-                messagingSenderId: "123456789012",
-                appId: "1:123456789012:web:abcdef123456"
-            };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        // Standard public collection path accessible anonymously by all devices worldwide
-        const publicCollection = 'public_agasaro_shared_db';
-        const docId = 'global_data';
-
-        window.firebaseDb = db;
-        window.firebaseAuth = auth;
-
-        async function initCloudSync() {
-            try {
-                await signInAnonymously(auth);
-            } catch (err) {
-                console.warn("Auth fallback mode:", err);
-            }
-
-            const sharedDocRef = doc(db, publicCollection, docId);
-            
-            // Real-time listener across all browsers and devices
-            onSnapshot(sharedDocRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    const data = snapshot.data();
-                    if (data.email) { window.TROUPE_EMAIL = data.email; localStorage.setItem('uruyange_email', data.email); }
-                    if (data.phone) { window.phoneNumber = data.phone; localStorage.setItem('uruyange_phone', data.phone); }
-                    if (data.title) { window.troupeTitle = data.title; localStorage.setItem('uruyange_title', data.title); }
-                    if (data.subtitle) { window.troupeSubtitle = data.subtitle; localStorage.setItem('uruyange_subtitle', data.subtitle); }
-                    if (data.logo !== undefined) { window.customLogo = data.logo; if(data.logo) localStorage.setItem('uruyange_logo', data.logo); else localStorage.removeItem('uruyange_logo'); }
-                    if (data.adPoster !== undefined) { window.adPosterBase64 = data.adPoster; if(data.adPoster) localStorage.setItem('agasaro_ad_poster', data.adPoster); else localStorage.removeItem('agasaro_ad_poster'); }
-                    if (data.adEnabled !== undefined) { window.adPosterEnabled = data.adEnabled; localStorage.setItem('agasaro_ad_enabled', data.adEnabled); }
-                    
-                    if (data.slides) { window.slides = data.slides; localStorage.setItem('uruyange_slides', JSON.stringify(data.slides)); if(window.renderSlides) window.renderSlides(); if(window.renderAdminSlidesList) window.renderAdminSlidesList(); }
-                    if (data.videos) { window.videos = data.videos; localStorage.setItem('uruyange_videos', JSON.stringify(data.videos)); if(window.renderYouTubeGrid) window.renderYouTubeGrid(); if(window.renderAdminVideosList) window.renderAdminVideosList(); }
-                    if (data.calendarEvents) { window.calendarEvents = data.calendarEvents; localStorage.setItem('agasaro_calendar_events', JSON.stringify(data.calendarEvents)); if(window.renderSmallCalendar) window.renderSmallCalendar(); }
-                    if (data.enrollments) { window.paidEnrollments = data.enrollments; localStorage.setItem('agasaro_enrollment_records', JSON.stringify(data.enrollments)); if(window.updateAdminCounter) window.updateAdminCounter(); }
-
-                    if (window.updateBrandingUI) window.updateBrandingUI();
-                    if (window.updateContactUI) window.updateContactUI();
-                    if (window.renderAdminAdUI) window.renderAdminAdUI();
-                }
-            }, (error) => {
-                console.warn("Cloud sync listening notice:", error.message);
-            });
-        }
-
-        window.saveToCloud = async function(updateData) {
-            try {
-                if (!auth.currentUser) {
-                    try { await signInAnonymously(auth); } catch(e){}
-                }
-                const sharedDocRef = doc(db, publicCollection, docId);
-                await setDoc(sharedDocRef, updateData, { merge: true });
-            } catch(e) { console.warn("Cloud save warning:", e); }
+        // YOUR ACTUAL FIREBASE CONFIG KEYS
+        const firebaseConfig = {
+            apiKey: "AIzaSyD0I76asKUifyZMFtFoBwzT_7Y8XIUJlUE",
+            authDomain: "agasaro-ballet-synch.firebaseapp.com",
+            projectId: "agasaro-ballet-synch",
+            storageBucket: "agasaro-ballet-synch.firebasestorage.app",
+            messagingSenderId: "666931303564",
+            appId: "1:666931303564:web:da2dcc56cd9647cad8d7a9"
         };
 
-        window.addEventListener('DOMContentLoaded', () => {
-            initCloudSync();
-        });
+        let app, db, auth;
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            
+            signInAnonymously(auth).then(() => {
+                initFirestoreListener();
+            }).catch((err) => {
+                console.warn("Anonymous auth notice:", err);
+                initFirestoreListener();
+            });
+        } catch (e) {
+            console.warn("Firebase init notice:", e);
+        }
+
+        function initFirestoreListener() {
+            if (!db) return;
+            try {
+                const docRef = doc(db, "public_agasaro_shared_db", "global_data");
+                onSnapshot(docRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        if (data.email) { window.TROUPE_EMAIL = data.email; localStorage.setItem('uruyange_email', data.email); }
+                        if (data.phone) { window.phoneNumber = data.phone; localStorage.setItem('uruyange_phone', data.phone); }
+                        if (data.title) { window.troupeTitle = data.title; localStorage.setItem('uruyange_title', data.title); }
+                        if (data.subtitle) { window.troupeSubtitle = data.subtitle; localStorage.setItem('uruyange_subtitle', data.subtitle); }
+                        if (data.logo !== undefined) { window.customLogo = data.logo; if(data.logo) localStorage.setItem('uruyange_logo', data.logo); else localStorage.removeItem('uruyange_logo'); }
+                        if (data.adPoster !== undefined) { window.adPosterBase64 = data.adPoster; if(data.adPoster) localStorage.setItem('agasaro_ad_poster', data.adPoster); else localStorage.removeItem('agasaro_ad_poster'); }
+                        if (data.adEnabled !== undefined) { window.adPosterEnabled = data.adEnabled; localStorage.setItem('agasaro_ad_enabled', data.adEnabled); }
+                        if (data.slides) { window.slides = data.slides; localStorage.setItem('uruyange_slides', JSON.stringify(data.slides)); }
+                        if (data.videos) { window.videos = data.videos; localStorage.setItem('uruyange_videos', JSON.stringify(data.videos)); }
+                        if (data.calendarEvents) { window.calendarEvents = data.calendarEvents; localStorage.setItem('agasaro_calendar_events', JSON.stringify(data.calendarEvents)); }
+                        if (data.enrollments) { window.paidEnrollments = data.enrollments; localStorage.setItem('agasaro_enrollment_records', JSON.stringify(data.enrollments)); }
+
+                        if (window.updateBrandingUI) window.updateBrandingUI();
+                        if (window.updateContactUI) window.updateContactUI();
+                        if (window.renderSlides) window.renderSlides();
+                        if (window.renderYouTubeGrid) window.renderYouTubeGrid();
+                        if (window.renderSmallCalendar) window.renderSmallCalendar();
+                        if (window.renderAdminAdUI) window.renderAdminAdUI();
+                        if (window.updateAdminCounter) window.updateAdminCounter();
+                    }
+                }, (error) => {
+                    console.warn("Firestore sync listen error:", error);
+                });
+            } catch(e) {
+                console.warn("Firestore listener setup error:", e);
+            }
+        }
+
+        window.saveToCloudFirestore = async function() {
+            if (!db) return;
+            try {
+                const exportData = {
+                    email: localStorage.getItem('uruyange_email') || "praisedaniel370@gmail.com",
+                    phone: localStorage.getItem('uruyange_phone') || "+250 785 958 022",
+                    title: localStorage.getItem('uruyange_title') || "AGASARO BALLET",
+                    subtitle: localStorage.getItem('uruyange_subtitle') || "ITORERO RY'IMBYINO GAKONDO",
+                    logo: localStorage.getItem('uruyange_logo') || null,
+                    adPoster: localStorage.getItem('agasaro_ad_poster') || null,
+                    adEnabled: localStorage.getItem('agasaro_ad_enabled') === 'true',
+                    slides: JSON.parse(localStorage.getItem('uruyange_slides')) || [],
+                    videos: JSON.parse(localStorage.getItem('uruyange_videos')) || [],
+                    calendarEvents: JSON.parse(localStorage.getItem('agasaro_calendar_events')) || {},
+                    enrollments: JSON.parse(localStorage.getItem('agasaro_enrollment_records')) || []
+                };
+                await setDoc(doc(db, "public_agasaro_shared_db", "global_data"), exportData);
+                if (window.showToast) window.showToast("Cloud synced successfully across all devices!");
+            } catch (err) {
+                console.error("Cloud save error:", err);
+            }
+        };
     </script>
 
     <!-- Tailwind Config -->
@@ -189,7 +202,6 @@
             position: relative;
         }
 
-        /* Responsive minimum touch targets */
         .touch-target {
             min-height: 44px;
             min-width: 44px;
@@ -208,23 +220,19 @@
     <!-- OVERLAY ADVERTISEMENT POSTER MODAL -->
     <div id="ad-overlay-modal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md hidden transition-opacity duration-300">
         <div class="relative bg-custom-card border-2 border-black dark:border-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-w-md sm:max-w-lg lg:max-w-xl w-full shadow-2xl flex flex-col items-center text-center space-y-4 max-h-[92vh] overflow-y-auto">
-            <!-- Close Button -->
             <button onclick="closeAdModal()" class="absolute top-3 right-3 sm:top-4 sm:right-4 w-10 h-10 rounded-full bg-black text-white dark:bg-white dark:text-black flex items-center justify-center border border-custom hover:opacity-80 transition z-10 shadow-lg touch-target" aria-label="Close Advertisement">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
 
-            <!-- Advertisement Badge Header -->
             <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-black dark:border-white text-xs font-bold uppercase tracking-wider bg-zinc-100 text-black dark:bg-zinc-900 dark:text-white mt-1">
                 <i class="fa-solid fa-bullhorn text-black dark:text-white"></i>
                 <span data-i18n="ad_badge">Nyenyeri Announcement</span>
             </div>
 
-            <!-- Scaled Ad Image -->
             <div class="w-full overflow-hidden rounded-xl sm:rounded-2xl border border-custom bg-black flex items-center justify-center">
                 <img id="ad-poster-img" src="" alt="Advertisement Poster" class="w-full max-h-[50vh] sm:max-h-[55vh] object-contain rounded-xl sm:rounded-2xl">
             </div>
 
-            <!-- Ad Action CTA -->
             <div class="w-full flex flex-col sm:flex-row gap-3 pt-1">
                 <a href="#contact" onclick="closeAdModal()" class="w-full py-3.5 rounded-xl bg-black text-white dark:bg-white dark:text-black font-bold text-sm sm:text-base hover:opacity-90 transition text-center shadow touch-target">
                     <span data-i18n="hero_cta_enroll">Andikisha Umwana Ubu</span>
@@ -247,13 +255,11 @@
             </div>
             
             <div class="flex items-center flex-wrap gap-2 sm:gap-3.5 ml-auto">
-                <!-- REAL TIME 24-HOUR CLOCK -->
                 <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-custom bg-custom-card font-mono text-xs font-semibold text-zinc-800 dark:text-zinc-200 shadow-sm" title="Local Timezone Clock">
                     <i class="fa-regular fa-clock text-black dark:text-white text-[11px]"></i>
                     <span id="realtime-clock">00:00:00</span>
                 </div>
 
-                <!-- LANGUAGE SELECTOR -->
                 <div class="relative inline-block text-left">
                     <select id="lang-selector" onchange="changeLanguage(this.value)" class="bg-custom-card border border-custom text-xs font-semibold rounded-md px-2 py-1.5 focus:outline-none cursor-pointer text-black dark:text-white">
                         <option value="rw">Kinyarwanda</option>
@@ -264,7 +270,6 @@
 
                 <div class="hidden xs:block h-3.5 w-px bg-zinc-700/40"></div>
 
-                <!-- DYNAMIC THEME TOGGLE BUTTON -->
                 <button onclick="toggleTheme()" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-black dark:border-white hover:bg-zinc-200 dark:hover:bg-zinc-800 transition text-xs font-bold text-black dark:text-white touch-target min-h-0" aria-label="Toggle Theme">
                     <i id="theme-icon" class="fa-solid fa-sun text-black dark:text-white"></i>
                     <span id="theme-text" class="hidden xs:inline">Light</span>
@@ -288,8 +293,6 @@
     <header class="sticky top-0 z-40 bg-custom-secondary/95 border-b border-custom backdrop-blur-md">
         <div class="max-w-7xl 2xl:max-w-[1536px] 3xl:max-w-[1792px] mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-20">
-                
-                <!-- LOGO SECTION -->
                 <a href="#home" class="flex items-center gap-3 group focus:outline-none">
                     <div id="logo-container" class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl border-2 border-black dark:border-white bg-black dark:bg-white text-white dark:text-black flex items-center justify-center font-bold text-xl group-hover:scale-105 transition-transform overflow-hidden shadow-md">
                         <i id="site-logo-icon" class="fa-solid fa-drum block text-white dark:text-black"></i>
@@ -421,9 +424,7 @@
     <!-- TERM 3 ACTIVITIES & HOLIDAY SCHEDULE SECTION -->
     <section id="holidays" class="py-16 sm:py-24 relative bg-custom-card border-b border-custom">
         <div class="max-w-7xl 2xl:max-w-[1536px] 3xl:max-w-[1792px] mx-auto px-4 sm:px-6 lg:px-8">
-            
             <div class="border-2 border-black dark:border-white p-6 sm:p-10 lg:p-12 rounded-2xl sm:rounded-3xl bg-custom-secondary/40 shadow-2xl relative">
-                
                 <div class="flex flex-col md:flex-row items-center justify-between mb-10 gap-6 pb-6 border-b border-custom">
                     <div class="text-center md:text-left space-y-2">
                         <span class="inline-flex items-center px-3.5 py-1.5 rounded-full border border-black dark:border-white text-xs font-extrabold uppercase tracking-widest text-black dark:text-white bg-custom-card">
@@ -443,34 +444,28 @@
                 </p>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <!-- Activity 1 -->
                     <div class="clean-card p-6 rounded-2xl space-y-4 border-custom">
                         <div class="w-12 h-12 rounded-xl bg-custom-secondary border border-black dark:border-white flex items-center justify-center text-xl text-black dark:text-white"><i class="fa-solid fa-drum text-black dark:text-white"></i></div>
                         <h3 class="text-base sm:text-lg font-bold font-serif text-black dark:text-white" data-i18n="term3_act1_title">Imbyino n'Ingoma za Kinyarwanda</h3>
                         <p class="text-xs sm:text-sm text-custom-muted leading-relaxed" data-i18n="term3_act1_desc">Kwiga neza kubyina Umushayizero, imisimbuko ya Intore, guhuza intambwe n'ingoma n'amajwi y'ubusizi.</p>
                     </div>
-                    <!-- Activity 2 -->
                     <div class="clean-card p-6 rounded-2xl space-y-4 border-custom">
                         <div class="w-12 h-12 rounded-xl bg-custom-secondary border border-black dark:border-white flex items-center justify-center text-xl text-black dark:text-white"><i class="fa-solid fa-book-open-reader text-black dark:text-white"></i></div>
                         <h3 class="text-base sm:text-lg font-bold font-serif text-black dark:text-white" data-i18n="term3_act1_2">Ibyivugo, Kuririmba & Amateka</h3>
                         <p class="text-xs sm:text-sm text-custom-muted leading-relaxed" data-i18n="term3_act2_desc">Gutoza abana gutinyuka mu ruhame, kuririmba indirimbo gakondo, n'amateka meza y'umuco w'u Rwanda.</p>
                     </div>
-                    <!-- Activity 3 -->
                     <div class="clean-card p-6 rounded-2xl space-y-4 border-custom">
                         <div class="w-12 h-12 rounded-xl bg-custom-secondary border border-black dark:border-white flex items-center justify-center text-xl text-black dark:text-white"><i class="fa-solid fa-trophy text-black dark:text-white"></i></div>
                         <h3 class="text-base sm:text-lg font-bold font-serif text-black dark:text-white" data-i18n="term3_act3_title">Ibitaramo no Guhabwa Imyanzuro</h3>
                         <p class="text-xs sm:text-sm text-custom-muted leading-relaxed" data-i18n="term3_act3_desc">Kugaragaza impano mu bitaramo biterwa ku mpera z'ibiruhuko no guhemba abana bazamuye ubumenyi cyane.</p>
                     </div>
-                    <!-- Activity 4 -->
                     <div class="clean-card p-6 rounded-2xl space-y-4 border-custom">
                         <div class="w-12 h-12 rounded-xl bg-custom-secondary border border-black dark:border-white flex items-center justify-center text-xl text-black dark:text-white"><i class="fa-solid fa-people-group text-black dark:text-white"></i></div>
                         <h3 class="text-base sm:text-lg font-bold font-serif text-black dark:text-white" data-i18n="term3_act4_title">Ubusabane n'Indangagaciro</h3>
                         <p class="text-xs sm:text-sm text-custom-muted leading-relaxed" data-i18n="term3_act4_desc">Kurema ubumwe n'ubwiyunge mu bana bato, kubaha abakuru, n'ubupfura buranga Intore nyakuri.</p>
                     </div>
                 </div>
-
             </div>
-
         </div>
     </section>
 
@@ -497,7 +492,6 @@
     <section id="contact" class="py-16 sm:py-24 relative bg-custom-secondary border-t border-custom">
         <div class="max-w-7xl 2xl:max-w-[1536px] 3xl:max-w-[1792px] mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12">
-                
                 <div class="lg:col-span-5 space-y-6">
                     <span class="text-xs sm:text-sm font-bold uppercase tracking-widest text-custom-muted" data-i18n="enroll_tag">Zana umwana wawe muri Agasaro Ballet</span>
                     <h2 class="text-3xl sm:text-4xl md:text-5xl font-serif font-bold text-black dark:text-white" data-i18n="enroll_title">Kwiyandikisha ku Mwana</h2>
@@ -531,13 +525,11 @@
                                 <span id="cal-month-year" class="text-xs sm:text-sm font-mono font-bold text-custom-muted">November 2026</span>
                             </div>
 
-                            <!-- Calendar Grid -->
                             <div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-custom-muted py-1">
                                 <div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div><div>S</div>
                             </div>
                             <div id="calendar-days-grid" class="grid grid-cols-7 gap-1 text-center text-xs sm:text-sm"></div>
 
-                            <!-- Display Selected Date Events (Read-Only) -->
                             <div class="pt-3 border-t border-custom space-y-2">
                                 <div class="flex items-center justify-between text-xs font-semibold text-custom-muted">
                                     <span>Selected: <strong id="cal-selected-date-label" class="text-black dark:text-white">Today</strong></span>
@@ -687,7 +679,6 @@
     <footer class="bg-custom-secondary border-t border-custom pt-16 pb-12">
         <div class="max-w-7xl 2xl:max-w-[1536px] 3xl:max-w-[1792px] mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
-                <!-- Column 1: About Troupe -->
                 <div class="space-y-4">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl border border-black dark:border-white bg-black text-white dark:bg-white dark:text-black flex items-center justify-center font-bold text-sm shrink-0"><i class="fa-solid fa-drum text-white dark:text-black"></i></div>
@@ -703,7 +694,6 @@
                     </div>
                 </div>
 
-                <!-- Column 2: Quick Links -->
                 <div class="space-y-4">
                     <h4 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-black dark:text-white" data-i18n="footer_links_title">Aho bishyira</h4>
                     <ul class="space-y-2.5 text-xs sm:text-sm text-custom-muted">
@@ -715,7 +705,6 @@
                     </ul>
                 </div>
 
-                <!-- Column 3: Contact Info -->
                 <div class="space-y-4">
                     <h4 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-black dark:text-white" data-i18n="footer_contact_title">Aho Tubarizwa</h4>
                     <ul class="space-y-3 text-xs sm:text-sm text-custom-muted">
@@ -734,7 +723,6 @@
                     </ul>
                 </div>
 
-                <!-- Column 4: Notes -->
                 <div class="space-y-4">
                     <h4 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-black dark:text-white" data-i18n="footer_schedule_title">Gahunda y'Ikigo</h4>
                     <p class="text-xs sm:text-sm text-custom-muted leading-relaxed" data-i18n="footer_schedule_desc">
@@ -746,7 +734,6 @@
                 </div>
             </div>
 
-            <!-- Bottom Copyright & Back to Top -->
             <div class="pt-8 border-t border-custom flex flex-col sm:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-custom-muted">
                 <p>&copy; <span id="year">2026</span> Agasaro Ballet. All rights reserved.</p>
                 <div class="flex items-center gap-4">
@@ -768,6 +755,17 @@
                 <h3 class="text-lg font-bold font-serif text-black dark:text-white">Urubuga rw'Admin</h3>
             </div>
             <button onclick="toggleAdminPanel()" class="p-2 text-custom-muted hover:text-black dark:hover:text-white rounded-lg touch-target" aria-label="Close Admin Panel"><i class="fa-solid fa-xmark text-lg text-black dark:text-white"></i></button>
+        </div>
+
+        <!-- GitHub JSON Sync Integration Helper -->
+        <div class="space-y-3 mb-8 p-4 rounded-2xl border border-black dark:border-white bg-custom-secondary">
+            <label class="block text-xs font-bold uppercase tracking-wider text-black dark:text-white"><i class="fa-brands fa-github mr-1"></i> GitHub JSON Sync Setup</label>
+            <p class="text-[11px] text-custom-muted leading-tight">Paste your raw <code>data.json</code> URL from GitHub below so all devices sync automatically:</p>
+            <input id="admin-github-url-input" type="url" placeholder="https://raw.githubusercontent.com/.../data.json" class="w-full px-3 py-2.5 rounded-xl bg-custom-card border border-custom text-xs focus:outline-none text-black dark:text-white">
+            <div class="flex gap-2">
+                <button onclick="saveGitHubUrl()" class="w-full py-2.5 bg-black text-white dark:bg-white dark:text-black font-bold rounded-xl text-xs transition">Save GitHub URL</button>
+                <button onclick="generateDataJsonFile()" class="w-full py-2.5 border border-black dark:border-white text-black dark:text-white font-bold rounded-xl text-xs transition" title="Export data.json to upload to GitHub">Export data.json</button>
+            </div>
         </div>
 
         <!-- 1. CLEAN REGISTRATION COUNTER & EXPORT EXCEL BUTTON -->
@@ -1155,7 +1153,6 @@
         let troupeSubtitle = localStorage.getItem('uruyange_subtitle') || "ITORERO RY'IMBYINO GAKONDO";
         let customLogo = localStorage.getItem('uruyange_logo') || null;
 
-        /* ADVERTISEMENT POSTER STATE */
         let adPosterBase64 = localStorage.getItem('agasaro_ad_poster') || null;
         let adPosterEnabled = localStorage.getItem('agasaro_ad_enabled') === 'true';
 
@@ -1177,7 +1174,6 @@
             { parentName: "Alice Umutoni", parentEmail: "alice@example.com", childName: "Keza Grace", childAge: "7", phone: "+250788112233", season: "Ibiruhuko by'igihembwe cya 3", notes: "First time dancer", timestamp: "2026-06-01 10:30 AM" }
         ];
 
-        // Calendar state store
         let calendarEvents = JSON.parse(localStorage.getItem('agasaro_calendar_events')) || {
             "2026-11-01": ["15:00 Practice Session at Basketball Court"],
             "2026-11-15": ["14:00 Term 3 Cultural Showcase"]
@@ -1204,14 +1200,22 @@
             renderSmallCalendar();
             renderAdminAdUI();
             
-            // Check & Auto Open Overlay Ad Poster if Enabled
-            checkAndTriggerAdModal();
+            const githubUrlInput = document.getElementById('admin-github-url-input');
+            if (githubUrlInput) githubUrlInput.value = window.GITHUB_JSON_URL;
 
+            checkAndTriggerAdModal();
             document.getElementById('year').textContent = new Date().getFullYear();
             startAutoPlay();
         });
 
-        /* 1. AUTOMATIC REAL-TIME 24-HOUR SYSTEM CLOCK */
+        function saveGitHubUrl() {
+            const url = document.getElementById('admin-github-url-input').value.trim();
+            window.GITHUB_JSON_URL = url;
+            localStorage.setItem('agasaro_github_json_url', url);
+            showToast("GitHub JSON URL saved! Refreshing sync...");
+            fetchGlobalDataFromGitHub();
+        }
+
         function startRealtimeClock() {
             function updateClock() {
                 const now = new Date();
@@ -1219,15 +1223,12 @@
                 const minutes = String(now.getMinutes()).padStart(2, '0');
                 const seconds = String(now.getSeconds()).padStart(2, '0');
                 const clockEl = document.getElementById('realtime-clock');
-                if (clockEl) {
-                    clockEl.textContent = `${hours}:${minutes}:${seconds}`;
-                }
+                if (clockEl) clockEl.textContent = `${hours}:${minutes}:${seconds}`;
             }
             updateClock();
             setInterval(updateClock, 1000);
         }
 
-        /* 2. OVERLAY ADVERTISEMENT POSTER FUNCTIONS */
         function checkAndTriggerAdModal() {
             if (adPosterEnabled && adPosterBase64) {
                 const imgEl = document.getElementById('ad-poster-img');
@@ -1252,13 +1253,9 @@
                     adPosterEnabled = true;
                     localStorage.setItem('agasaro_ad_poster', adPosterBase64);
                     localStorage.setItem('agasaro_ad_enabled', 'true');
-                    
-                    if (window.saveToCloud) {
-                        window.saveToCloud({ adPoster: adPosterBase64, adEnabled: true });
-                    }
-                    
                     renderAdminAdUI();
-                    showToast("Overlay poster uploaded & synced globally!");
+                    if(window.saveToCloudFirestore) window.saveToCloudFirestore();
+                    showToast("Poster uploaded & synced to cloud!");
                 });
             } else {
                 showToast("Please select an image file to upload", "error");
@@ -1272,13 +1269,9 @@
             }
             adPosterEnabled = !adPosterEnabled;
             localStorage.setItem('agasaro_ad_enabled', adPosterEnabled ? 'true' : 'false');
-            
-            if (window.saveToCloud) {
-                window.saveToCloud({ adEnabled: adPosterEnabled });
-            }
-
             renderAdminAdUI();
-            showToast(`Popup advertisement ${adPosterEnabled ? 'Enabled' : 'Disabled'} globally`);
+            if(window.saveToCloudFirestore) window.saveToCloudFirestore();
+            showToast(`Popup advertisement ${adPosterEnabled ? 'Enabled' : 'Disabled'}`);
         }
 
         function removeAdPoster() {
@@ -1286,14 +1279,10 @@
             adPosterEnabled = false;
             localStorage.removeItem('agasaro_ad_poster');
             localStorage.removeItem('agasaro_ad_enabled');
-            document.getElementById('admin-ad-file').value.trim();
-
-            if (window.saveToCloud) {
-                window.saveToCloud({ adPoster: null, adEnabled: false });
-            }
-
+            document.getElementById('admin-ad-file').value = '';
             renderAdminAdUI();
-            showToast("Overlay advertisement poster removed globally.");
+            if(window.saveToCloudFirestore) window.saveToCloudFirestore();
+            showToast("Overlay advertisement poster removed.");
         }
 
         function renderAdminAdUI() {
@@ -1320,7 +1309,6 @@
             }
         }
 
-        /* 3. PUBLIC DISPLAY-ONLY CALENDAR LOGIC */
         function renderSmallCalendar() {
             const grid = document.getElementById('calendar-days-grid');
             if (!grid) return;
@@ -1402,50 +1390,34 @@
             });
         }
 
-        /* 4. ADMIN-ONLY CALENDAR MANAGEMENT LOGIC */
         function addCalendarEventFromAdmin() {
             const dateInput = document.getElementById('admin-cal-date-input').value;
             const eventInput = document.getElementById('admin-cal-event-input').value.trim();
 
-            if (!dateInput) {
-                showToast("Please pick a valid date", "error");
-                return;
-            }
-            if (!eventInput) {
-                showToast("Please enter event text & time", "error");
+            if (!dateInput || !eventInput) {
+                showToast("Please fill date and event text", "error");
                 return;
             }
 
-            if (!calendarEvents[dateInput]) {
-                calendarEvents[dateInput] = [];
-            }
+            if (!calendarEvents[dateInput]) calendarEvents[dateInput] = [];
             calendarEvents[dateInput].push(eventInput);
             localStorage.setItem('agasaro_calendar_events', JSON.stringify(calendarEvents));
             
-            if (window.saveToCloud) {
-                window.saveToCloud({ calendarEvents });
-            }
-
             document.getElementById('admin-cal-event-input').value = '';
             selectedCalDateKey = dateInput;
             renderSmallCalendar();
-            showToast("Calendar event saved & synced globally!");
+            if(window.saveToCloudFirestore) window.saveToCloudFirestore();
+            showToast("Event added & synced to cloud!");
         }
 
         function removeCalendarEventFromAdmin(dateKey, idx) {
             if (calendarEvents[dateKey]) {
                 calendarEvents[dateKey].splice(idx, 1);
-                if (calendarEvents[dateKey].length === 0) {
-                    delete calendarEvents[dateKey];
-                }
+                if (calendarEvents[dateKey].length === 0) delete calendarEvents[dateKey];
                 localStorage.setItem('agasaro_calendar_events', JSON.stringify(calendarEvents));
-                
-                if (window.saveToCloud) {
-                    window.saveToCloud({ calendarEvents });
-                }
-
                 renderSmallCalendar();
-                showToast("Event removed globally");
+                if(window.saveToCloudFirestore) window.saveToCloudFirestore();
+                showToast("Event removed & synced.");
             }
         }
 
@@ -1476,22 +1448,20 @@
             });
         }
 
-        /* 5. ENROLLMENT FORM SUBMISSION */
         async function handleFormSubmit(event) {
             event.preventDefault();
             const childNameInput = document.getElementById('form-child-name').value.trim();
 
             const isDuplicate = paidEnrollments.some(item => item.childName.toLowerCase() === childNameInput.toLowerCase());
             if (isDuplicate) {
-                showToast(`Umwana witwa "${childNameInput}" yamaze kwiyandikisha cyangwa ubusabe bwe bwatanzwe!`, "error");
+                showToast(`Umwana witwa "${childNameInput}" yamaze kwiyandikisha!`, "error");
                 return;
             }
 
             const submitBtn = document.getElementById('submit-btn');
             const originalText = submitBtn.innerHTML;
-            
             submitBtn.disabled = true;
-            submitBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-xs text-white dark:text-black"></i> <span>Sending...</span>`;
+            submitBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-xs"></i> <span>Sending...</span>`;
 
             const formData = {
                 parentName: document.getElementById('form-parent-name').value.trim(),
@@ -1506,12 +1476,8 @@
 
             paidEnrollments.unshift(formData);
             localStorage.setItem('agasaro_enrollment_records', JSON.stringify(paidEnrollments));
-            
-            if (window.saveToCloud) {
-                window.saveToCloud({ enrollments: paidEnrollments });
-            }
-
             updateAdminCounter();
+            if(window.saveToCloudFirestore) window.saveToCloudFirestore();
             await dispatchEmailDirectly(formData);
 
             submitBtn.disabled = false;
@@ -1565,10 +1531,9 @@
 
         function downloadEnrollmentsExcel() {
             if (paidEnrollments.length === 0) {
-                showToast("No registration records found to export.", "error");
+                showToast("No registration records found.", "error");
                 return;
             }
-
             const excelData = paidEnrollments.map((item, index) => ({
                 "S/N": index + 1,
                 "Parent Name": item.parentName || '',
@@ -1580,55 +1545,26 @@
                 "Special Notes": item.notes || '',
                 "Registration Date": item.timestamp || ''
             }));
-
             const worksheet = XLSX.utils.json_to_sheet(excelData);
-
-            worksheet['!cols'] = [
-                { wch: 6 },
-                { wch: 22 },
-                { wch: 28 },
-                { wch: 18 },
-                { wch: 22 },
-                { wch: 10 },
-                { wch: 30 },
-                { wch: 25 },
-                { wch: 22 }
-            ];
-
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Enrolled Students");
-
-            const dateStr = new Date().toISOString().slice(0, 10);
-            XLSX.writeFile(workbook, `Agasaro_Ballet_Enrollments_${dateStr}.xlsx`);
-            
-            showToast("Export Excel file generated successfully!");
+            XLSX.writeFile(workbook, `Agasaro_Ballet_Enrollments.xlsx`);
+            showToast("Excel file generated!");
         }
 
         function updateAdminCounter() {
             const counterEl = document.getElementById('admin-counter-display');
-            if (counterEl) {
-                counterEl.textContent = paidEnrollments.length;
-            }
+            if (counterEl) counterEl.textContent = paidEnrollments.length;
         }
 
         function updateContactSettings() {
-            const emailInput = document.getElementById('admin-email-input').value.trim();
-            const phoneInput = document.getElementById('admin-phone-input').value.trim();
-            if (emailInput) {
-                TROUPE_EMAIL = emailInput;
-                localStorage.setItem('uruyange_email', TROUPE_EMAIL);
-            }
-            if (phoneInput) {
-                phoneNumber = phoneInput;
-                localStorage.setItem('uruyange_phone', phoneNumber);
-            }
-
-            if (window.saveToCloud) {
-                window.saveToCloud({ email: TROUPE_EMAIL, phone: phoneNumber });
-            }
-
+            TROUPE_EMAIL = document.getElementById('admin-email-input').value.trim() || TROUPE_EMAIL;
+            phoneNumber = document.getElementById('admin-phone-input').value.trim() || phoneNumber;
+            localStorage.setItem('uruyange_email', TROUPE_EMAIL);
+            localStorage.setItem('uruyange_phone', phoneNumber);
             updateContactUI();
-            showToast("Director contact & email updated & synced!");
+            if(window.saveToCloudFirestore) window.saveToCloudFirestore();
+            showToast("Contact settings updated & synced!");
         }
 
         function updateContactUI() {
@@ -1639,14 +1575,13 @@
             document.getElementById('admin-phone-input').value = phoneNumber;
 
             const cleanDigits = phoneNumber.replace(/\D/g, '');
-            document.getElementById('whatsapp-direct-link').href = `https://wa.me/${cleanDigits}?text=Muraho!%20I%20would%20like%20to%20enroll%20my%20child%20in%20Agasaro%20Ballet.`;
+            document.getElementById('whatsapp-direct-link').href = `https://wa.me/${cleanDigits}?text=Muraho!%20I%20would%20like%20to%20enroll%20my%20child.`;
         }
 
         function initTheme() {
             document.documentElement.setAttribute('data-theme', currentTheme);
             const icon = document.getElementById('theme-icon');
             const text = document.getElementById('theme-text');
-            
             if (currentTheme === 'dark') {
                 icon.className = 'fa-solid fa-sun text-white';
                 if (text) text.textContent = 'Light';
@@ -1701,29 +1636,21 @@
             if (!ytId) { showToast("Enter a valid YouTube URL", "error"); return; }
             videos.unshift({ id: ytId, title, ageGroup });
             localStorage.setItem('uruyange_videos', JSON.stringify(videos));
-
-            if (window.saveToCloud) {
-                window.saveToCloud({ videos });
-            }
-
             document.getElementById('admin-yt-url').value = '';
             document.getElementById('admin-yt-title').value = '';
             renderYouTubeGrid();
             renderAdminVideosList();
-            showToast("Video added & synced globally!");
+            if(window.saveToCloudFirestore) window.saveToCloudFirestore();
+            showToast("Video added & synced to cloud!");
         }
 
         function deleteVideo(idx) {
             videos.splice(idx, 1);
             localStorage.setItem('uruyange_videos', JSON.stringify(videos));
-
-            if (window.saveToCloud) {
-                window.saveToCloud({ videos });
-            }
-
             renderYouTubeGrid();
             renderAdminVideosList();
-            showToast("Video removed globally.");
+            if(window.saveToCloudFirestore) window.saveToCloudFirestore();
+            showToast("Video removed.");
         }
 
         function renderAdminVideosList() {
@@ -1770,7 +1697,7 @@
         function startAutoPlay() { autoPlayInterval = setInterval(nextSlide, 6000); }
 
         function addSlideFromAdmin() {
-            if (slides.length >= 10) { showToast("Maximum of 10 slides reached!", "error"); return; }
+            if (slides.length >= 10) { showToast("Maximum 10 slides reached!", "error"); return; }
             const fileInput = document.getElementById('admin-local-file');
             const title = document.getElementById('new-slide-title').value.trim() || 'Agasaro Training';
             const desc = document.getElementById('new-slide-desc').value.trim() || 'Traditional dance preservation.';
@@ -1778,33 +1705,25 @@
                 compressAndEncodeImage(fileInput.files[0], (base64) => {
                     slides.push({ url: base64, title, description: desc });
                     localStorage.setItem('uruyange_slides', JSON.stringify(slides));
-
-                    if (window.saveToCloud) {
-                        window.saveToCloud({ slides });
-                    }
-
                     fileInput.value = '';
                     document.getElementById('new-slide-title').value = '';
                     document.getElementById('new-slide-desc').value = '';
                     renderSlides();
                     renderAdminSlidesList();
-                    showToast("Slide added & synced globally!");
+                    if(window.saveToCloudFirestore) window.saveToCloudFirestore();
+                    showToast("Slide added & synced to cloud!");
                 });
-            } else { showToast("Select an image file!", "error"); }
+            } else { showToast("Select an image!", "error"); }
         }
 
         function deleteSlide(idx) {
             if (slides.length <= 1) { showToast("At least 1 slide required", "error"); return; }
             slides.splice(idx, 1);
             localStorage.setItem('uruyange_slides', JSON.stringify(slides));
-
-            if (window.saveToCloud) {
-                window.saveToCloud({ slides });
-            }
-
             renderSlides();
             renderAdminSlidesList();
-            showToast("Slide removed globally.");
+            if(window.saveToCloudFirestore) window.saveToCloudFirestore();
+            showToast("Slide removed.");
         }
 
         function renderAdminSlidesList() {
@@ -1845,28 +1764,23 @@
         }
 
         function updateBrandingSettings() {
-            const t = document.getElementById('admin-title-input').value.trim();
-            const sub = document.getElementById('admin-subtitle-input').value.trim();
+            troupeTitle = document.getElementById('admin-title-input').value.trim() || troupeTitle;
+            troupeSubtitle = document.getElementById('admin-subtitle-input').value.trim() || troupeSubtitle;
+            localStorage.setItem('uruyange_title', troupeTitle);
+            localStorage.setItem('uruyange_subtitle', troupeSubtitle);
+
             const logoFile = document.getElementById('admin-logo-file').files[0];
-            if (t) { troupeTitle = t; localStorage.setItem('uruyange_title', troupeTitle); }
-            if (sub) { troupeSubtitle = sub; localStorage.setItem('uruyange_subtitle', troupeSubtitle); }
             if (logoFile) {
                 compressAndEncodeImage(logoFile, (base64Logo) => {
                     customLogo = base64Logo;
                     localStorage.setItem('uruyange_logo', customLogo);
-                    
-                    if (window.saveToCloud) {
-                        window.saveToCloud({ title: troupeTitle, subtitle: troupeSubtitle, logo: customLogo });
-                    }
-
                     updateBrandingUI();
+                    if(window.saveToCloudFirestore) window.saveToCloudFirestore();
                     showToast("Branding & Logo updated & synced!");
                 });
             } else {
-                if (window.saveToCloud) {
-                    window.saveToCloud({ title: troupeTitle, subtitle: troupeSubtitle });
-                }
                 updateBrandingUI();
+                if(window.saveToCloudFirestore) window.saveToCloudFirestore();
                 showToast("Branding updated & synced!");
             }
         }
@@ -1874,13 +1788,9 @@
         function removeCustomLogo() {
             customLogo = null;
             localStorage.removeItem('uruyange_logo');
-
-            if (window.saveToCloud) {
-                window.saveToCloud({ logo: null });
-            }
-
             updateBrandingUI();
-            showToast("Custom logo removed globally.");
+            if(window.saveToCloudFirestore) window.saveToCloudFirestore();
+            showToast("Logo removed.");
         }
 
         function updateBrandingUI() {
