@@ -28,7 +28,7 @@
     <!-- Firebase SDK Imports -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = typeof __firebase_config !== 'undefined' 
@@ -46,7 +46,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Public shared collection path to avoid permission rule blocks
+        // Standard public collection path accessible anonymously by all devices worldwide
         const publicCollection = 'public_agasaro_shared_db';
         const docId = 'global_data';
 
@@ -62,6 +62,7 @@
 
             const sharedDocRef = doc(db, publicCollection, docId);
             
+            // Real-time listener across all browsers and devices
             onSnapshot(sharedDocRef, (snapshot) => {
                 if (snapshot.exists()) {
                     const data = snapshot.data();
@@ -89,6 +90,9 @@
 
         window.saveToCloud = async function(updateData) {
             try {
+                if (!auth.currentUser) {
+                    try { await signInAnonymously(auth); } catch(e){}
+                }
                 const sharedDocRef = doc(db, publicCollection, docId);
                 await setDoc(sharedDocRef, updateData, { merge: true });
             } catch(e) { console.warn("Cloud save warning:", e); }
