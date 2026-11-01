@@ -31,7 +31,7 @@
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // YOUR ACTUAL FIREBASE CONFIG KEYS
+        // YOUR PRODUCTION FIREBASE CONFIG KEYS
         const firebaseConfig = {
             apiKey: "AIzaSyD0I76asKUifyZMFtFoBwzT_7Y8XIUJlUE",
             authDomain: "agasaro-ballet-synch.firebaseapp.com",
@@ -40,6 +40,8 @@
             messagingSenderId: "666931303564",
             appId: "1:666931303564:web:da2dcc56cd9647cad8d7a9"
         };
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'agasaro-ballet-app';
 
         let app, db, auth;
         try {
@@ -50,46 +52,58 @@
             signInAnonymously(auth).then(() => {
                 initFirestoreListener();
             }).catch((err) => {
-                console.warn("Anonymous auth notice:", err);
+                console.warn("Anonymous auth fallback:", err);
                 initFirestoreListener();
             });
         } catch (e) {
-            console.warn("Firebase init notice:", e);
+            console.warn("Firebase initialization error:", e);
         }
 
         function initFirestoreListener() {
             if (!db) return;
             try {
-                const docRef = doc(db, "public_agasaro_shared_db", "global_data");
+                // Public Data Path following mandatory Firestore structure
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'global_data');
                 onSnapshot(docRef, (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
-                        if (data.email) { window.TROUPE_EMAIL = data.email; localStorage.setItem('uruyange_email', data.email); }
-                        if (data.phone) { window.phoneNumber = data.phone; localStorage.setItem('uruyange_phone', data.phone); }
-                        if (data.title) { window.troupeTitle = data.title; localStorage.setItem('uruyange_title', data.title); }
-                        if (data.subtitle) { window.troupeSubtitle = data.subtitle; localStorage.setItem('uruyange_subtitle', data.subtitle); }
-                        if (data.logo !== undefined) { window.customLogo = data.logo; if(data.logo) localStorage.setItem('uruyange_logo', data.logo); else localStorage.removeItem('uruyange_logo'); }
-                        if (data.adPoster !== undefined) { window.adPosterBase64 = data.adPoster; if(data.adPoster) localStorage.setItem('agasaro_ad_poster', data.adPoster); else localStorage.removeItem('agasaro_ad_poster'); }
-                        if (data.adEnabled !== undefined) { window.adPosterEnabled = data.adEnabled; localStorage.setItem('agasaro_ad_enabled', data.adEnabled); }
-                        if (data.slides) { window.slides = data.slides; localStorage.setItem('uruyange_slides', JSON.stringify(data.slides)); }
-                        if (data.videos) { window.videos = data.videos; localStorage.setItem('uruyange_videos', JSON.stringify(data.videos)); }
-                        if (data.calendarEvents) { window.calendarEvents = data.calendarEvents; localStorage.setItem('agasaro_calendar_events', JSON.stringify(data.calendarEvents)); }
-                        if (data.enrollments) { window.paidEnrollments = data.enrollments; localStorage.setItem('agasaro_enrollment_records', JSON.stringify(data.enrollments)); }
-
-                        if (window.updateBrandingUI) window.updateBrandingUI();
-                        if (window.updateContactUI) window.updateContactUI();
-                        if (window.renderSlides) window.renderSlides();
-                        if (window.renderYouTubeGrid) window.renderYouTubeGrid();
-                        if (window.renderSmallCalendar) window.renderSmallCalendar();
-                        if (window.renderAdminAdUI) window.renderAdminAdUI();
-                        if (window.updateAdminCounter) window.updateAdminCounter();
+                        applyCloudDataToApp(data);
                     }
                 }, (error) => {
-                    console.warn("Firestore sync listen error:", error);
+                    // Fallback to legacy path if standard artifact path fails
+                    const fallbackRef = doc(db, "public_agasaro_shared_db", "global_data");
+                    onSnapshot(fallbackRef, (fallbackSnap) => {
+                        if (fallbackSnap.exists()) {
+                            applyCloudDataToApp(fallbackSnap.data());
+                        }
+                    }, (err2) => console.warn("Sync listen warning:", err2));
                 });
             } catch(e) {
-                console.warn("Firestore listener setup error:", e);
+                console.warn("Firestore listener setup warning:", e);
             }
+        }
+
+        function applyCloudDataToApp(data) {
+            if (!data) return;
+            if (data.email) { window.TROUPE_EMAIL = data.email; localStorage.setItem('uruyange_email', data.email); }
+            if (data.phone) { window.phoneNumber = data.phone; localStorage.setItem('uruyange_phone', data.phone); }
+            if (data.title) { window.troupeTitle = data.title; localStorage.setItem('uruyange_title', data.title); }
+            if (data.subtitle) { window.troupeSubtitle = data.subtitle; localStorage.setItem('uruyange_subtitle', data.subtitle); }
+            if (data.logo !== undefined) { window.customLogo = data.logo; if(data.logo) localStorage.setItem('uruyange_logo', data.logo); else localStorage.removeItem('uruyange_logo'); }
+            if (data.adPoster !== undefined) { window.adPosterBase64 = data.adPoster; if(data.adPoster) localStorage.setItem('agasaro_ad_poster', data.adPoster); else localStorage.removeItem('agasaro_ad_poster'); }
+            if (data.adEnabled !== undefined) { window.adPosterEnabled = data.adEnabled; localStorage.setItem('agasaro_ad_enabled', data.adEnabled); }
+            if (data.slides) { window.slides = data.slides; localStorage.setItem('uruyange_slides', JSON.stringify(data.slides)); }
+            if (data.videos) { window.videos = data.videos; localStorage.setItem('uruyange_videos', JSON.stringify(data.videos)); }
+            if (data.calendarEvents) { window.calendarEvents = data.calendarEvents; localStorage.setItem('agasaro_calendar_events', JSON.stringify(data.calendarEvents)); }
+            if (data.enrollments) { window.paidEnrollments = data.enrollments; localStorage.setItem('agasaro_enrollment_records', JSON.stringify(data.enrollments)); }
+
+            if (window.updateBrandingUI) window.updateBrandingUI();
+            if (window.updateContactUI) window.updateContactUI();
+            if (window.renderSlides) window.renderSlides();
+            if (window.renderYouTubeGrid) window.renderYouTubeGrid();
+            if (window.renderSmallCalendar) window.renderSmallCalendar();
+            if (window.renderAdminAdUI) window.renderAdminAdUI();
+            if (window.updateAdminCounter) window.updateAdminCounter();
         }
 
         window.saveToCloudFirestore = async function() {
@@ -108,8 +122,10 @@
                     calendarEvents: JSON.parse(localStorage.getItem('agasaro_calendar_events')) || {},
                     enrollments: JSON.parse(localStorage.getItem('agasaro_enrollment_records')) || []
                 };
+                
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'global_data'), exportData);
                 await setDoc(doc(db, "public_agasaro_shared_db", "global_data"), exportData);
-                if (window.showToast) window.showToast("Cloud synced successfully across all devices!");
+                if (window.showToast) window.showToast("Changes synced live across all devices!");
             } catch (err) {
                 console.error("Cloud save error:", err);
             }
@@ -757,17 +773,6 @@
             <button onclick="toggleAdminPanel()" class="p-2 text-custom-muted hover:text-black dark:hover:text-white rounded-lg touch-target" aria-label="Close Admin Panel"><i class="fa-solid fa-xmark text-lg text-black dark:text-white"></i></button>
         </div>
 
-        <!-- GitHub JSON Sync Integration Helper -->
-        <div class="space-y-3 mb-8 p-4 rounded-2xl border border-black dark:border-white bg-custom-secondary">
-            <label class="block text-xs font-bold uppercase tracking-wider text-black dark:text-white"><i class="fa-brands fa-github mr-1"></i> GitHub JSON Sync Setup</label>
-            <p class="text-[11px] text-custom-muted leading-tight">Paste your raw <code>data.json</code> URL from GitHub below so all devices sync automatically:</p>
-            <input id="admin-github-url-input" type="url" placeholder="https://raw.githubusercontent.com/.../data.json" class="w-full px-3 py-2.5 rounded-xl bg-custom-card border border-custom text-xs focus:outline-none text-black dark:text-white">
-            <div class="flex gap-2">
-                <button onclick="saveGitHubUrl()" class="w-full py-2.5 bg-black text-white dark:bg-white dark:text-black font-bold rounded-xl text-xs transition">Save GitHub URL</button>
-                <button onclick="generateDataJsonFile()" class="w-full py-2.5 border border-black dark:border-white text-black dark:text-white font-bold rounded-xl text-xs transition" title="Export data.json to upload to GitHub">Export data.json</button>
-            </div>
-        </div>
-
         <!-- 1. CLEAN REGISTRATION COUNTER & EXPORT EXCEL BUTTON -->
         <div class="space-y-4 mb-8 p-6 rounded-2xl border border-black dark:border-white bg-custom-secondary text-center">
             <span class="text-xs font-bold uppercase tracking-wider text-custom-muted block">Total Registered Children</span>
@@ -1199,22 +1204,11 @@
             updateAdminCounter();
             renderSmallCalendar();
             renderAdminAdUI();
-            
-            const githubUrlInput = document.getElementById('admin-github-url-input');
-            if (githubUrlInput) githubUrlInput.value = window.GITHUB_JSON_URL;
 
             checkAndTriggerAdModal();
             document.getElementById('year').textContent = new Date().getFullYear();
             startAutoPlay();
         });
-
-        function saveGitHubUrl() {
-            const url = document.getElementById('admin-github-url-input').value.trim();
-            window.GITHUB_JSON_URL = url;
-            localStorage.setItem('agasaro_github_json_url', url);
-            showToast("GitHub JSON URL saved! Refreshing sync...");
-            fetchGlobalDataFromGitHub();
-        }
 
         function startRealtimeClock() {
             function updateClock() {
