@@ -53,19 +53,14 @@
         function initFirestoreListener() {
             if (!db) return;
             try {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'global_data');
-                onSnapshot(docRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        applyCloudDataToApp(docSnap.data());
+                // Listen to fallback public collection first for GitHub hosting compatibility
+                const fallbackRef = doc(db, "public_agasaro_shared_db", "global_data");
+                onSnapshot(fallbackRef, (fallbackSnap) => {
+                    if (fallbackSnap.exists()) {
+                        applyCloudDataToApp(fallbackSnap.data());
                     }
-                }, (error) => {
-                    // Fallback collection if main path encounters permission rules
-                    const fallbackRef = doc(db, "public_agasaro_shared_db", "global_data");
-                    onSnapshot(fallbackRef, (fallbackSnap) => {
-                        if (fallbackSnap.exists()) {
-                            applyCloudDataToApp(fallbackSnap.data());
-                        }
-                    }, (err2) => console.warn("Sync listen fallback warning:", err2));
+                }, (err2) => {
+                    console.warn("Sync listen fallback warning:", err2);
                 });
             } catch(e) {
                 console.warn("Listener setup error:", e);
@@ -116,20 +111,26 @@
                 return;
             }
 
+            let syncSuccess = false;
+
             try {
-                // Primary artifact cloud save
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'global_data'), exportData);
-                if (window.showToast) window.showToast(manualMessage);
+                // Try saving to the public shared collection first for GitHub pages compatibility
+                await setDoc(doc(db, "public_agasaro_shared_db", "global_data"), exportData);
+                syncSuccess = true;
             } catch (err1) {
-                console.warn("Primary cloud save failed, trying fallback collection:", err1);
+                console.warn("Shared cloud save failed, trying artifacts path:", err1);
                 try {
-                    // Fallback shared collection save
-                    await setDoc(doc(db, "public_agasaro_shared_db", "global_data"), exportData);
-                    if (window.showToast) window.showToast(manualMessage);
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'global_data'), exportData);
+                    syncSuccess = true;
                 } catch (err2) {
                     console.error("All cloud sync paths failed:", err2);
-                    if (window.showToast) window.showToast("Saved locally. Cloud sync offline.", "error");
                 }
+            }
+
+            if (syncSuccess) {
+                if (window.showToast) window.showToast(manualMessage);
+            } else {
+                if (window.showToast) window.showToast("Saved locally. Check your internet or Firebase Rules.", "error");
             }
         };
     </script>
