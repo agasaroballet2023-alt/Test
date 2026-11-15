@@ -2017,23 +2017,36 @@ function changeLanguage(lang) {
         function startAutoPlay() { autoPlayInterval = setInterval(nextSlide, 6000); }
 
         function addSlideFromAdmin() {
-            if (slides.length >= 10) { showToast("Maximum 10 slides reached!", "error"); return; }
+            if (slides.length >= 10) { 
+                showToast("Maximum 10 slides reached!", "error"); 
+                return; 
+            }
+            
             const fileInput = document.getElementById('admin-local-file');
             const title = document.getElementById('new-slide-title').value.trim() || 'Agasaro Training';
             const desc = document.getElementById('new-slide-desc').value.trim() || 'Traditional dance preservation.';
             
             if (fileInput.files && fileInput.files[0]) {
+                showToast("Compressing slide image...", "info");
+                
                 compressAndEncodeImage(fileInput.files[0], (base64) => {
+                    if (!base64) {
+                        showToast("Image compression failed!", "error");
+                        return;
+                    }
+                    
                     slides.push({ url: base64, title, description: desc });
                     localStorage.setItem('uruyange_slides', JSON.stringify(slides));
+                    
                     fileInput.value = '';
                     document.getElementById('new-slide-title').value = '';
                     document.getElementById('new-slide-desc').value = '';
+                    
                     renderSlides();
                     renderAdminSlidesList();
                     
                     // AUTO-SYNC TO CLOUD INSTANTLY
-                    saveToCloudFirestore("Slide added & synced live globally!");
+                    saveToCloudFirestore("Slide compressed, added & synced live globally!");
                 });
             } else { 
                 showToast("Select an image first!", "error"); 
@@ -2041,10 +2054,15 @@ function changeLanguage(lang) {
         }
 
         function deleteSlide(idx) {
-            if (slides.length <= 1) { showToast("At least 1 slide required", "error"); return; }
+            if (slides.length <= 1) { 
+                showToast("At least 1 slide required", "error"); 
+                return; 
+            }
+            
             slides.splice(idx, 1);
             if (currentSlideIndex >= slides.length) currentSlideIndex = 0;
             localStorage.setItem('uruyange_slides', JSON.stringify(slides));
+            
             renderSlides();
             renderAdminSlidesList();
             
