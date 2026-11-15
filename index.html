@@ -1,0 +1,2198 @@
+<!DOCTYPE html>
+<html lang="rw" data-theme="dark" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Agasaro Ballet | Itorero Gakondo ry'Abana Bato (Imyaka 2-15)</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+    
+    <!-- SheetJS (xlsx) CDN for Excel generation -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <!-- FIREBASE SDK & GLOBAL CLOUD SYNC CONFIGURATION -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, doc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+// Your Firebase configuration (replace with your actual config details if needed)
+const firebaseConfig = {
+apiKey: "AIzaSyD0I76asKUifyZMFtFoBwzT_7Y8XIUJlUE",
+  authDomain: "agasaro-ballet-synch.firebaseapp.com",
+  databaseURL: "https://agasaro-ballet-synch-default-rtdb.firebaseio.com",
+  projectId: "agasaro-ballet-synch",
+  storageBucket: "agasaro-ballet-synch.firebasestorage.app",
+  messagingSenderId: "666931303564",
+  appId: "1:666931303564:web:da2dcc56cd9647cad8d7a9"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Main Global Sync Save Function (Valid 2-segment path)
+window.saveToCloudFirestore = async function(manualMessage = "Changes synced live globally!") {
+    const exportData = {
+        email: localStorage.getItem('uruyange_email') || "praisedaniel370@gmail.com",
+        phone: localStorage.getItem('uruyange_phone') || "+250 785 958 022",
+        title: localStorage.getItem('uruyange_title') || "AGASARO BALLET",
+        subtitle: localStorage.getItem('uruyange_subtitle') || "ITORERO RY'IMBYINO GAKONDO",
+        logo: localStorage.getItem('uruyange_logo') || null,
+        adPoster: localStorage.getItem('agasaro_ad_poster') || null,
+        adEnabled: localStorage.getItem('agasaro_ad_enabled') === 'true',
+        slides: JSON.parse(localStorage.getItem('uruyange_slides')) || [],
+        videos: JSON.parse(localStorage.getItem('uruyange_videos')) || [],
+        calendarEvents: JSON.parse(localStorage.getItem('agasaro_calendar_events')) || {},
+        enrollments: JSON.parse(localStorage.getItem('agasaro_enrollment_records')) || [],
+        updatedAt: new Date().toISOString(),
+        serverTimestamp: serverTimestamp()
+    };
+
+    try {
+        // Clean 2-segment document reference (even number of segments: collection / document)
+        const globalRef = doc(db, "public_agasaro_shared_db", "global_data");
+        await setDoc(globalRef, exportData, { merge: true });
+        
+        showToast(manualMessage);
+        console.log("Cloud sync successful!");
+    } catch (err) {
+        console.error("Cloud sync failed:", err);
+        showToast("Cloud sync failed. Check console.", "error");
+    }
+};
+
+// Real-time listener to automatically apply global updates across client devices
+function initRealtimeSync() {
+    const globalRef = doc(db, "public_agasaro_shared_db", "global_data");
+    onSnapshot(globalRef, (docSnap) => {
+        if (docSnap.exists()) {
+            applyCloudDataToApp(docSnap.data());
+        }
+    }, (error) => {
+        console.warn("Realtime sync listener notice:", error);
+    });
+}
+
+function applyCloudDataToApp(data) {
+    if (!data) return;
+    
+    // Only update local storage if remote data is newer or different to prevent overwrite loops
+    if (data.email) localStorage.setItem('uruyange_email', data.email);
+    if (data.phone) localStorage.setItem('uruyange_phone', data.phone);
+    if (data.title) localStorage.setItem('uruyange_title', data.title);
+    if (data.subtitle) localStorage.setItem('uruyange_subtitle', data.subtitle);
+    if (data.slides) localStorage.setItem('uruyange_slides', JSON.stringify(data.slides));
+    if (data.videos) localStorage.setItem('uruyange_videos', JSON.stringify(data.videos));
+    if (data.calendarEvents) localStorage.setItem('agasaro_calendar_events', JSON.stringify(data.calendarEvents));
+    if (data.enrollments) localStorage.setItem('agasaro_enrollment_records', JSON.stringify(data.enrollments));
+    
+    if (typeof updateBrandingUI === 'function') updateBrandingUI();
+    if (typeof updateContactUI === 'function') updateContactUI();
+    if (typeof renderSlides === 'function') renderSlides();
+    if (typeof renderYouTubeGrid === 'function') renderYouTubeGrid();
+    if (typeof updateAdminCounter === 'function') updateAdminCounter();
+    if (typeof renderSmallCalendar === 'function') renderSmallCalendar();
+}
+
+// Initialize real-time sync listener on page load
+window.addEventListener('DOMContentLoaded', () => {
+    initRealtimeSync();
+});
+    </script>
+
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            darkMode: ['class', '[data-theme="dark"]'],
+            theme: {
+                extend: {
+                    screens: {
+                        'xs': '360px',
+                        '3xl': '1792px',
+                        '4k': '2200px'
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom Styling & Universal Display Scaling -->
+    <style>
+        :root[data-theme="dark"] {
+            --bg-primary: #09090b;
+            --bg-secondary: #111114;
+            --bg-card: #16161a;
+            --border-color: #27272a;
+            --text-main: #fafafa;
+            --text-muted: #a1a1aa;
+            --pattern-opacity: 0.04;
+            --shadow-custom: 0 12px 28px -8px rgba(0, 0, 0, 0.55);
+            --scrollbar-thumb: #ffffff;
+        }
+
+        :root[data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-card: #ffffff;
+            --border-color: #e4e4e7;
+            --text-main: #18181b;
+            --text-muted: #52525b;
+            --pattern-opacity: 0.025;
+            --shadow-custom: 0 12px 28px -8px rgba(0, 0, 0, 0.06);
+            --scrollbar-thumb: #959a9f;
+        }
+
+        html {
+            font-size: clamp(14.5px, 0.25vw + 14px, 21px);
+            -webkit-text-size-adjust: 100%;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+
+        .site-container {
+            width: 100%;
+            max-width: min(92vw, 90rem);
+            margin-left: auto;
+            margin-right: auto;
+            padding-left: clamp(1rem, 2.5vw, 2.5rem);
+            padding-right: clamp(1rem, 2.5vw, 2.5rem);
+        }
+
+        .bg-custom-secondary { background-color: var(--bg-secondary); }
+        .bg-custom-card { background-color: var(--bg-card); }
+        .border-custom { border-color: var(--border-color); }
+        .text-custom-muted { color: var(--text-muted); }
+
+        .imigongo-pattern {
+            background-color: var(--bg-primary);
+            background-image: radial-gradient(var(--text-main) 0.75px, transparent 0.75px);
+            background-size: 28px 28px;
+            opacity: var(--pattern-opacity);
+        }
+
+        .clean-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-custom);
+            transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        @media (hover: hover) {
+            .clean-card:hover {
+                border-color: var(--text-main);
+                transform: translateY(-2px);
+            }
+        }
+
+        .slide-item {
+            transition: opacity 0.55s ease-in-out;
+            opacity: 0;
+            pointer-events: none;
+            position: absolute;
+            inset: 0;
+        }
+        .slide-item.active {
+            opacity: 1;
+            pointer-events: auto;
+            position: relative;
+        }
+
+        .touch-target {
+            min-height: 44px;
+            min-width: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+            outline: 2px solid currentColor;
+            outline-offset: 2px;
+        }
+
+        img {
+            image-rendering: -webkit-optimize-contrast;
+        }
+
+        ::-webkit-scrollbar { width: 7px; height: 7px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
+    </style>
+</head>
+<body class="font-sans antialiased overflow-x-hidden text-base leading-relaxed selection:bg-zinc-500/30">
+
+    <!-- OVERLAY ADVERTISEMENT POSTER MODAL -->
+    <div id="ad-overlay-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm hidden transition-all">
+        <div class="relative bg-custom-card border border-custom rounded-2xl sm:rounded-3xl p-5 sm:p-7 max-w-lg 3xl:max-w-xl w-full shadow-2xl flex flex-col items-center text-center space-y-4 max-h-[92vh] overflow-y-auto">
+            <button onclick="closeAdModal()" class="absolute top-3.5 right-3.5 w-10 h-10 rounded-full bg-custom-secondary text-custom-muted hover:text-black dark:hover:text-white flex items-center justify-center border border-custom transition touch-target" aria-label="Close Advertisement">
+                <i class="fa-solid fa-xmark text-base"></i>
+            </button>
+
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-custom text-xs font-semibold uppercase tracking-wider bg-custom-secondary text-black dark:text-white">
+                <i class="fa-solid fa-bullhorn"></i>
+                <span data-i18n="ad_badge">Ubutumwa bw'Itorero</span>
+            </div>
+
+            <div class="w-full overflow-hidden rounded-xl sm:rounded-2xl border border-custom bg-black flex items-center justify-center">
+                <img id="ad-poster-img" src="" alt="Announcement Poster" class="w-full max-h-[52vh] object-contain">
+            </div>
+
+            <div class="w-full flex flex-col sm:flex-row gap-3 pt-1">
+                <a href="#contact" onclick="closeAdModal()" class="w-full py-3 rounded-xl bg-black text-white dark:bg-white dark:text-black font-semibold text-sm hover:opacity-90 transition text-center shadow touch-target">
+                    <span data-i18n="hero_cta_enroll">Andikisha Umwana Ubu</span>
+                </a>
+                <button onclick="closeAdModal()" class="w-full py-3 rounded-xl border border-custom font-semibold text-sm hover:bg-custom-secondary transition touch-target" data-i18n="btn_close">
+                    Funga
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOP ANNOUNCEMENT BAR WITH REAL-TIME CLOCK -->
+    <div class="border-b border-custom py-2 text-xs font-medium bg-custom-secondary">
+        <div class="site-container flex flex-wrap justify-between items-center gap-2 sm:gap-4">
+            <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                <i class="fa-solid fa-location-dot text-custom-muted text-sm"></i>
+                <span class="hidden md:inline text-custom-muted text-xs truncate" data-i18n="top_location">Byumba, Gicumbi | Imyitozo y'abana bato mu biruhuko bikuru</span>
+            </div>
+            
+            <div class="flex items-center gap-2 sm:gap-3 ml-auto">
+                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-custom bg-custom-card font-mono text-xs font-semibold shadow-sm">
+                    <i class="fa-regular fa-clock text-xs text-custom-muted"></i>
+                    <span id="realtime-clock">00:00:00</span>
+                </div>
+
+                <div class="relative inline-block text-left">
+                    <select id="lang-selector" onchange="changeLanguage(this.value)" aria-label="Language" class="bg-custom-card border border-custom text-xs font-semibold rounded-md px-2 sm:px-2.5 py-1.5 focus:outline-none cursor-pointer">
+                        <option value="rw">Kiny</option>
+                        <option value="en">Eng</option>
+                        <option value="fr">Fr</option>
+                    </select>
+                </div>
+
+                <button onclick="toggleTheme()" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-custom hover:bg-custom-card transition text-xs font-semibold touch-target min-h-0" aria-label="Toggle Theme">
+                    <i id="theme-icon" class="fa-solid fa-sun"></i>
+                    <span id="theme-text" class="hidden xs:inline">Light</span>
+                </button>
+                
+                <div class="hidden sm:block h-3.5 w-px bg-zinc-700/40"></div>
+                
+                <div class="hidden sm:flex items-center space-x-1.5">
+                    <a href="https://www.instagram.com/p/DbY6efEiJM9/?igsh=MTg2djE5MTY1MWVnNw==" target="_blank" rel="noopener" class="text-custom-muted hover:text-black dark:hover:text-white transition p-1.5" aria-label="Instagram"><i class="fa-brands fa-instagram text-sm"></i></a>
+                    <a href="https://www.tiktok.com/@agasaro.ballet2?_r=1&_t=ZS-98RfRoWocnX" target="_blank" rel="noopener" class="text-custom-muted hover:text-black dark:hover:text-white transition p-1.5" aria-label="TikTok"><i class="fa-brands fa-tiktok text-sm"></i></a>
+                    <a href="https://youtube.com/@Agasaroballetgicumbi" target="_blank" rel="noopener" class="text-custom-muted hover:text-black dark:hover:text-white transition p-1.5" aria-label="YouTube"><i class="fa-brands fa-youtube text-sm"></i></a>
+                </div>
+                
+                <button onclick="promptAdminLogin()" class="px-2.5 sm:px-3 py-1.5 text-xs rounded-md border border-custom hover:bg-custom-card font-semibold transition flex items-center gap-1.5 shrink-0">
+                    <i class="fa-solid fa-sliders text-[11px]"></i> <span data-i18n="admin_btn">Admin</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN NAVIGATION -->
+    <header class="sticky top-0 z-40 bg-custom-secondary/95 border-b border-custom backdrop-blur-md">
+        <div class="site-container">
+            <div class="flex items-center justify-between h-16 sm:h-20 gap-4">
+                <a href="#home" class="flex items-center gap-2.5 sm:gap-3.5 group focus:outline-none min-w-0">
+                    <div id="logo-container" class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl border border-custom bg-black dark:bg-white text-white dark:text-black flex items-center justify-center font-bold text-lg sm:text-xl group-hover:scale-105 transition overflow-hidden shadow-sm shrink-0">
+                        <i id="site-logo-icon" class="fa-solid fa-drum block"></i>
+                        <img id="site-logo-img" alt="Logo" class="w-full h-full object-cover hidden">
+                    </div>
+                    <div class="min-w-0">
+                        <span id="site-header-title" class="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight font-serif uppercase block leading-none truncate">
+                            AGASARO <span class="font-light text-zinc-500">BALLET</span>
+                        </span>
+                        <span id="site-header-subtitle" class="text-[10px] sm:text-xs tracking-widest font-medium uppercase block mt-1 text-custom-muted truncate" data-i18n="nav_subtitle">Itorero ry'imbyino gakondo</span>
+                    </div>
+                </a>
+
+                <nav class="hidden lg:flex items-center space-x-1 xl:space-x-2">
+                    <a href="#home" class="px-3.5 py-2 rounded-xl text-sm font-medium hover:bg-custom-card transition" data-i18n="nav_home">Ahabanza</a>
+                    <a href="#about" class="px-3.5 py-2 rounded-xl text-sm font-medium text-custom-muted hover:text-black dark:hover:text-white hover:bg-custom-card transition" data-i18n="nav_about">Ibisobanuro</a>
+                    <a href="#holidays" class="px-3.5 py-2 rounded-xl text-sm font-medium text-custom-muted hover:text-black dark:hover:text-white hover:bg-custom-card transition" data-i18n="nav_holidays">Ibikorwa</a>
+                    <a href="#videos" class="px-3.5 py-2 rounded-xl text-sm font-medium text-custom-muted hover:text-black dark:hover:text-white hover:bg-custom-card transition" data-i18n="nav_videos">Amashusho</a>
+                    <a href="#contact" class="px-3.5 py-2 rounded-xl text-sm font-medium text-custom-muted hover:text-black dark:hover:text-white hover:bg-custom-card transition" data-i18n="nav_enroll">Iyandikishe</a>
+                </nav>
+
+                <div class="hidden md:flex items-center shrink-0">
+                    <a href="#contact" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-black text-white dark:bg-white dark:text-black hover:opacity-90 transition shadow-sm touch-target" data-i18n="nav_enroll_btn">
+                        Andikisha umwana
+                    </a>
+                </div>
+
+                <div class="lg:hidden shrink-0">
+                    <button onclick="toggleMobileMenu()" class="p-2.5 rounded-xl border border-custom hover:bg-custom-card touch-target" aria-label="Toggle Menu">
+                        <i class="fa-solid fa-bars text-lg"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="mobile-menu" class="hidden lg:hidden border-t border-custom bg-custom-secondary px-4 pt-3 pb-6 space-y-1.5">
+            <a href="#home" onclick="toggleMobileMenu()" class="block px-4 py-3 rounded-xl text-sm font-semibold bg-custom-card" data-i18n="nav_home">Ahabanza</a>
+            <a href="#about" onclick="toggleMobileMenu()" class="block px-4 py-3 rounded-xl text-sm font-medium text-custom-muted hover:bg-custom-card" data-i18n="nav_about">Ibisobanuro</a>
+            <a href="#holidays" onclick="toggleMobileMenu()" class="block px-4 py-3 rounded-xl text-sm font-medium text-custom-muted hover:bg-custom-card" data-i18n="nav_holidays">Ibikorwa</a>
+            <a href="#videos" onclick="toggleMobileMenu()" class="block px-4 py-3 rounded-xl text-sm font-medium text-custom-muted hover:bg-custom-card" data-i18n="nav_videos">Amashusho</a>
+            <a href="#contact" onclick="toggleMobileMenu()" class="block px-4 py-3 rounded-xl text-sm font-medium text-custom-muted hover:bg-custom-card" data-i18n="nav_enroll">Iyandikishe</a>
+            <div class="pt-2 flex items-center justify-between px-4 border-t border-custom mt-2">
+                <div class="flex items-center space-x-3 py-2">
+                    <a href="https://www.instagram.com/p/DbY6efEiJM9/?igsh=MTg2djE5MTY1MWVnNw==" target="_blank" rel="noopener" class="text-custom-muted hover:text-black dark:hover:text-white p-1.5" aria-label="Instagram"><i class="fa-brands fa-instagram text-base"></i></a>
+                    <a href="https://www.tiktok.com/@agasaro.ballet2?_r=1&_t=ZS-98RfRoWocnX" target="_blank" rel="noopener" class="text-custom-muted hover:text-black dark:hover:text-white p-1.5" aria-label="TikTok"><i class="fa-brands fa-tiktok text-base"></i></a>
+                    <a href="https://youtube.com/@Agasaroballetgicumbi" target="_blank" rel="noopener" class="text-custom-muted hover:text-black dark:hover:text-white p-1.5" aria-label="YouTube"><i class="fa-brands fa-youtube text-base"></i></a>
+                </div>
+                <a href="#contact" onclick="toggleMobileMenu()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-black text-white dark:bg-white dark:text-black" data-i18n="nav_enroll_btn">Andikisha umwana</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- HERO SECTION & SLIDESHOW -->
+    <section id="home" class="relative min-h-[75vh] 3xl:min-h-[68vh] flex items-center justify-center overflow-hidden py-10 sm:py-16 lg:py-20">
+        <div class="absolute inset-0 imigongo-pattern z-0"></div>
+        <div class="site-container relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 lg:gap-12 items-center">
+                
+                <div class="lg:col-span-5 text-center lg:text-left space-y-5 sm:space-y-6">
+                    <div class="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full border border-custom bg-custom-secondary text-xs font-semibold uppercase tracking-wider">
+                        <span class="w-2 h-2 rounded-full bg-black dark:bg-white"></span>
+                        <span data-i18n="hero_badge">Itorero ry'Imbyino Gakondo (Imyaka 2–15)</span>
+                    </div>
+                    
+                    <h1 class="text-3xl sm:text-4xl lg:text-[2.75rem] xl:text-5xl font-bold font-serif tracking-tight leading-[1.18]">
+                        <span data-i18n="hero_title_1">Agasaro Ballet</span> <br class="hidden sm:inline">
+                        <span class="underline decoration-black dark:decoration-white decoration-2 underline-offset-8" data-i18n="hero_title_2">ni iki?</span>
+                    </h1>
+                    
+                    <p class="text-custom-muted text-sm sm:text-base lg:text-[1.05rem] font-normal leading-relaxed max-w-xl mx-auto lg:mx-0" data-i18n="hero_desc">
+                        Agasaro Ballet ni itsinda abana bato batorezwamo umuco nyarwanda batarama Kinyarwanda (Kubyina imbyino gakondo, kuririmba, kuvuza ingoma, ibyivugo, n'amateka). Batozwa mu biruhuko bikuru.
+                    </p>
+
+                    <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-1">
+                        <a href="#contact" class="w-full sm:w-auto px-6 py-3.5 rounded-xl text-center font-semibold bg-black text-white dark:bg-white dark:text-black hover:opacity-90 transition shadow-md touch-target text-sm">
+                            <i class="fa-solid fa-user-plus text-xs mr-2"></i> <span data-i18n="hero_cta_enroll">Andikisha Umwana Ubu</span>
+                        </a>
+                        <a href="#videos" class="w-full sm:w-auto px-6 py-3.5 rounded-xl text-center font-semibold border border-custom hover:bg-custom-card transition touch-target text-sm">
+                            <span data-i18n="hero_cta_videos">Reba amashusho</span> <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- SLIDESHOW CAROUSEL -->
+                <div class="lg:col-span-7">
+                    <div class="relative rounded-2xl sm:rounded-3xl overflow-hidden border border-custom bg-black shadow-2xl group">
+                        <div id="slides-wrapper" class="relative aspect-[4/3] sm:aspect-[16/10] w-full"></div>
+                        <div class="absolute inset-0 pointer-events-none flex items-center justify-between p-3 sm:p-4 z-20">
+                            <button onclick="prevSlide()" class="pointer-events-auto w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-black/65 hover:bg-black text-white border border-white/20 transition flex items-center justify-center shadow touch-target" aria-label="Previous Slide"><i class="fa-solid fa-chevron-left text-sm"></i></button>
+                            <button onclick="nextSlide()" class="pointer-events-auto w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-black/65 hover:bg-black text-white border border-white/20 transition flex items-center justify-center shadow touch-target" aria-label="Next Slide"><i class="fa-solid fa-chevron-right text-sm"></i></button>
+                        </div>
+                        <div class="absolute bottom-3 sm:bottom-4 left-0 right-0 z-20 flex justify-center">
+                            <div id="slide-indicators" class="flex space-x-1.5 bg-black/65 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20 shadow-lg"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ABOUT SECTION -->
+    <section id="about" class="py-14 sm:py-20 lg:py-24 bg-custom-secondary border-t border-b border-custom">
+        <div class="site-container">
+            <div class="text-center max-w-2xl mx-auto mb-10 sm:mb-14 space-y-2.5">
+                <span class="text-xs font-semibold uppercase tracking-widest text-custom-muted" data-i18n="about_tag">Buri rugo rugire Intore</span>
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold tracking-tight" data-i18n="about_title">Umuco wacu, Ishema ryacu</h2>
+                <div class="w-14 h-0.5 bg-black dark:bg-white mx-auto rounded-full mt-3"></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 lg:gap-8">
+                <div class="clean-card p-6 sm:p-8 rounded-2xl sm:rounded-3xl flex flex-col justify-between">
+                    <div>
+                        <div class="w-11 h-11 rounded-xl border border-custom flex items-center justify-center text-lg font-bold mb-5 bg-custom-secondary"><i class="fa-solid fa-child"></i></div>
+                        <h3 class="text-lg sm:text-xl font-bold font-serif mb-2.5" data-i18n="group_a_title">Ibirezi (Imyaka 2–5)</h3>
+                        <p class="text-custom-muted text-sm leading-relaxed" data-i18n="group_a_desc">Kugenda buhoro no kubyina mu njyana z'umuziki, bigisha abana gutega amaboko by'ibanze, no gukurikiza injyana neza.</p>
+                    </div>
+                </div>
+                <div class="clean-card p-6 sm:p-8 rounded-2xl sm:rounded-3xl flex flex-col justify-between">
+                    <div>
+                        <div class="w-11 h-11 rounded-xl border border-custom flex items-center justify-center text-lg font-bold mb-5 bg-custom-secondary"><i class="fa-solid fa-child"></i></div>
+                        <h3 class="text-lg sm:text-xl font-bold font-serif mb-2.5" data-i18n="group_b_title">Imbuto (Imyaka 6–10)</h3>
+                        <p class="text-custom-muted text-sm leading-relaxed" data-i18n="group_b_desc">Kwiga imyanya myiza na Umushagiriro ku bakobwa, n'imisimbuko ya Intore ku bahungu.</p>
+                    </div>
+                </div>
+                <div class="clean-card p-6 sm:p-8 rounded-2xl sm:rounded-3xl flex flex-col justify-between">
+                    <div>
+                        <div class="w-11 h-11 rounded-xl border border-custom flex items-center justify-center text-lg font-bold mb-5 bg-custom-secondary"><i class="fa-solid fa-drum"></i></div>
+                        <h3 class="text-lg sm:text-xl font-bold font-serif mb-2.5" data-i18n="group_c_title">Indirirarugamba (Imyaka 11–15)</h3>
+                        <p class="text-custom-muted text-sm leading-relaxed" data-i18n="group_c_desc">Kwigira imbyino gakondo mu buryo bwuzuye, guhuza injyana n’ingoma za kinyarwanda.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TERM 3 ACTIVITIES & HOLIDAY SCHEDULE SECTION -->
+    <section id="holidays" class="py-14 sm:py-20 lg:py-24 bg-custom-card border-b border-custom">
+        <div class="site-container">
+            <div class="border border-custom p-5 sm:p-8 lg:p-10 rounded-2xl sm:rounded-3xl bg-custom-secondary/50 shadow-lg">
+                <div class="flex flex-col md:flex-row items-center justify-between mb-6 sm:mb-8 gap-5 pb-6 border-b border-custom">
+                    <div class="text-center md:text-left space-y-2">
+                        
+                        <h2 class="text-xl sm:text-2xl lg:text-3xl font-serif font-bold tracking-tight" data-i18n="term3_title">Ibikorwa by'Igihembwe cya 3</h2>
+                    </div>
+
+                    <a href="#contact" class="w-full md:w-auto px-6 py-3 rounded-xl font-semibold bg-black text-white dark:bg-white dark:text-black hover:opacity-90 transition text-center flex items-center justify-center gap-2 border border-custom touch-target text-sm shrink-0">
+                        <i class="fa-solid fa-user-plus text-xs"></i>
+                        <span data-i18n="nav_enroll_btn">Andikisha umwana</span>
+                    </a>
+                </div>
+
+                <p class="text-custom-muted text-sm sm:text-base leading-relaxed mb-8 sm:mb-10 text-center max-w-3xl mx-auto" data-i18n="term3_subtitle">
+                    Mu biruhuko bikuru by'igihembwe cya 3, abana bacu bakora ibikorwa bitandukanye bizamura impano zabo n'ubumenyi bw'umuco nyarwanda.
+                </p>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
+                    <div class="clean-card p-5 sm:p-6 rounded-2xl space-y-3">
+                        <div class="w-10 h-10 rounded-xl bg-custom-secondary border border-custom flex items-center justify-center text-base"><i class="fa-solid fa-drum"></i></div>
+                        <h3 class="text-base font-bold font-serif" data-i18n="term3_act1_title">Imbyino n'Ingoma</h3>
+                        <p class="text-xs sm:text-sm text-custom-muted leading-relaxed" data-i18n="term3_act1_desc">Kwiga neza kubyina umushagiriro, imisimbuko ya Intore, guhuza intambwe n'ingoma n'amajwi y'ubusizi.</p>
+                    </div>
+                    <div class="clean-card p-5 sm:p-6 rounded-2xl space-y-3">
+                        <div class="w-10 h-10 rounded-xl bg-custom-secondary border border-custom flex items-center justify-center text-base"><i class="fa-solid fa-book"></i></div>
+                        <h3 class="text-base font-bold font-serif" data-i18n="term3_act1_2">Ibyivugo & Amateka</h3>
+                        <p class="text-xs sm:text-sm text-custom-muted leading-relaxed" data-i18n="term3_act2_desc">Gutoza abana gutinyuka mu ruhame, kuririmba indirimbo gakondo, n'amateka meza y'umuco w'u Rwanda.</p>
+                    </div>
+                    <div class="clean-card p-5 sm:p-6 rounded-2xl space-y-3">
+                        <div class="w-10 h-10 rounded-xl bg-custom-secondary border border-custom flex items-center justify-center text-base"><i class="fa-solid fa-people-arrows"></i></div>
+                        <h3 class="text-base font-bold font-serif" data-i18n="term3_act3_title">Ibitaramo n'Imyiyereko</h3>
+                        <p class="text-xs sm:text-sm text-custom-muted leading-relaxed" data-i18n="term3_act3_desc">Kugaragaza impano mu bitaramo bitegurwa ku mpera z'ibiruhuko by'igihembwe cya 3, no kwerekana imyiyereko y'imbyino gakondo.</p>
+                    </div>
+                    <div class="clean-card p-5 sm:p-6 rounded-2xl space-y-3">
+                        <div class="w-10 h-10 rounded-xl bg-custom-secondary border border-custom flex items-center justify-center text-base"><i class="fa-solid fa-people-group"></i></div>
+                        <h3 class="text-base font-bold font-serif" data-i18n="term3_act4_title">Ubusabane</h3>
+                        <p class="text-xs sm:text-sm text-custom-muted leading-relaxed" data-i18n="term3_act4_desc">Kurema ubumwe mu bana bato, kubaha abakuru n'ubupfura buranga Intore byahamye.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- YOUTUBE VIDEO SHOWCASE SECTION -->
+    <section id="videos" class="py-14 sm:py-20 lg:py-24 relative">
+        <div class="site-container">
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+                <div>
+                    <span class="text-xs font-semibold uppercase tracking-widest text-custom-muted" data-i18n="video_tag">Reba amashusho</span>
+                    <h2 class="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold tracking-tight mt-1" data-i18n="video_title">Imbyino z'abana</h2>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="filterVideos('All')" data-filter="All" class="video-filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold border border-custom bg-black text-white dark:bg-white dark:text-black transition touch-target min-h-0" data-i18n="filter_all">Amashusho yose</button>
+                    <button onclick="filterVideos('2-5 yrs')" data-filter="2-5 yrs" class="video-filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold border border-custom bg-custom-secondary text-custom-muted transition touch-target min-h-0" data-i18n="filter_2_5">Imyaka 2-5</button>
+                    <button onclick="filterVideos('6-10 yrs')" data-filter="6-10 yrs" class="video-filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold border border-custom bg-custom-secondary text-custom-muted transition touch-target min-h-0" data-i18n="filter_6_10">Imyaka 6-10</button>
+                    <button onclick="filterVideos('11-15 yrs')" data-filter="11-15 yrs" class="video-filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold border border-custom bg-custom-secondary text-custom-muted transition touch-target min-h-0" data-i18n="filter_11_15">Imyaka 11-15</button>
+                </div>
+            </div>
+            <div id="youtube-video-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 lg:gap-8"></div>
+        </div>
+    </section>
+
+    <!-- PARENT DIRECT ENROLLMENT & PUBLIC CALENDAR SECTION -->
+    <section id="contact" class="py-14 sm:py-20 lg:py-24 bg-custom-secondary border-t border-custom">
+        <div class="site-container">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+                <div class="lg:col-span-5 space-y-5 sm:space-y-6">
+                    <span class="text-xs font-semibold uppercase tracking-widest text-custom-muted" data-i18n="enroll_tag">Andikisha umwana wawe muri Agasaro Ballet</span>
+                    <h2 class="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold tracking-tight" data-i18n="enroll_title">Mukeneye andi makuru mwabariza hano</h2>
+                    <p class="text-custom-muted text-sm leading-relaxed" data-i18n="enroll_desc">
+                        Babyeyi, Hasi/Iburyo hari ifishi yuzuzwa n'umubyeyi cyangwa umurezi w'umwana. Nyamuneka mwuzuze neza amakuru yose asabwa.
+                    </p>
+
+                    <div class="space-y-3.5 pt-1">
+                        <div class="flex items-center gap-4 p-4 rounded-2xl border border-custom bg-custom-card">
+                            <div class="w-10 h-10 rounded-xl border border-custom flex items-center justify-center text-sm shrink-0"><i class="fa-solid fa-phone"></i></div>
+                            <div class="min-w-0">
+                                <p class="text-xs text-custom-muted" data-i18n="director_phone_label">Nimero y'umuyobozi w'Agasaro Ballet</p>
+                                <p id="contact-phone-display" class="text-sm sm:text-base font-bold truncate">+250 785 958 022</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 p-4 rounded-2xl border border-custom bg-custom-card">
+                            <div class="w-10 h-10 rounded-xl border border-custom flex items-center justify-center text-sm shrink-0"><i class="fa-solid fa-location-dot"></i></div>
+                            <div class="min-w-0">
+                                <p class="text-xs text-custom-muted" data-i18n="location_label">Aho twitoreza</p>
+                                <p class="text-sm sm:text-base font-bold" data-i18n="location_val">Gicumbi, Byumba City, Gacurabwenge</p>
+                            </div>
+                        </div>
+
+                        <!-- PUBLIC CALENDAR DISPLAY -->
+                        <div class="p-4 sm:p-5 rounded-2xl border border-custom bg-custom-card shadow-sm space-y-3">
+                            <div class="flex items-center justify-between border-b border-custom pb-2.5">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-regular fa-calendar-days text-sm"></i>
+                                    <h4 class="text-xs font-bold uppercase tracking-wider" data-i18n="cal_title">Kalendari y'Ibyatanzwe</h4>
+                                </div>
+                                <span id="cal-month-year" class="text-xs font-mono font-semibold text-custom-muted">November 2026</span>
+                            </div>
+
+                            <div class="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-custom-muted py-1">
+                                <div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div><div>S</div>
+                            </div>
+                            <div id="calendar-days-grid" class="grid grid-cols-7 gap-1 text-center text-xs"></div>
+
+                            <div class="pt-2 border-t border-custom space-y-1.5">
+                                <div class="flex items-center justify-between text-xs text-custom-muted">
+                                    <span>Selected: <strong id="cal-selected-date-label" class="text-black dark:text-white">Today</strong></span>
+                                    <span id="cal-event-count" class="font-mono font-semibold">0 events</span>
+                                </div>
+                                <div id="cal-events-list" class="space-y-1.5 max-h-32 overflow-y-auto"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ENROLLMENT FORM -->
+                <div class="lg:col-span-7">
+                    <div class="clean-card p-5 sm:p-8 rounded-2xl sm:rounded-3xl">
+                        <form id="booking-form" onsubmit="handleFormSubmit(event)" class="space-y-4 sm:space-y-5">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-custom-muted mb-1.5" data-i18n="lbl_parent_name">Izina ry'umubyeyi *</label>
+                                    <input id="form-parent-name" type="text" required placeholder="Alice Umutoni" class="w-full px-4 py-3 rounded-xl bg-custom-secondary border border-custom text-sm focus:outline-none focus:border-black dark:focus:border-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-custom-muted mb-1.5" data-i18n="lbl_parent_email">Email y'umubyeyi *</label>
+                                    <input id="form-parent-email" type="email" required placeholder="umubyeyi@example.com" class="w-full px-4 py-3 rounded-xl bg-custom-secondary border border-custom text-sm focus:outline-none focus:border-black dark:focus:border-white">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-custom-muted mb-1.5" data-i18n="lbl_child_name">Izina ry'umwana *</label>
+                                    <input id="form-child-name" type="text" required placeholder="Keza Grace" class="w-full px-4 py-3 rounded-xl bg-custom-secondary border border-custom text-sm focus:outline-none focus:border-black dark:focus:border-white">
+                                </div>
+                                <div>
+                                    <div>
+    <div>
+    <label class="block text-xs font-semibold uppercase tracking-wider text-custom-muted mb-1.5" data-i18n="lbl_child_age">Imyaka y'umwana (2–15) *</label>
+    <select id="form-child-age" required class="w-full px-4 py-3 rounded-xl bg-custom-secondary border border-custom text-sm focus:outline-none focus:border-black dark:focus:border-white">
+        <!-- Populated smoothly via JS on page load -->
+    </select>
+</div>
+</div>
+                                </div>
+                            </div>
+
+                            
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-custom-muted mb-1.5" data-i18n="lbl_phone">Telefone / WhatsApp *</label>
+            <input id="form-parent-phone" type="tel" required data-i18n-placeholder="ph_phone" placeholder="+250 78..." class="w-full px-4 py-3 rounded-xl bg-custom-secondary border border-custom text-sm focus:outline-none focus:border-black dark:focus:border-white">
+        </div>
+        <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-custom-muted mb-1.5" data-i18n="lbl_season">Igikorwa kifuzwa *</label>
+            <select id="form-camp-select" required class="w-full px-4 py-3 rounded-xl bg-custom-secondary border border-custom text-sm focus:outline-none focus:border-black dark:focus:border-white">
+                <option value="Gutozwa mu biruhuko bikuru" data-i18n="season_opt_1">Gutozwa mu biruhuko bikuru</option>
+                <option value="Gukorerwa mu bitaramo" data-i18n="season_opt_2">Gukorerwa mu bitaramo</option>
+            </select>
+        </div>
+    </div>
+
+    <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-custom-muted mb-1.5" data-i18n="lbl_notes">Ibisobanuro Byihariye</label>
+        <textarea id="form-notes" rows="3" data-i18n-placeholder="ph_notes" placeholder="Ubumenyi bw'umwana mu mbyino cyangwa ibindi bikenerwa..." class="w-full px-4 py-3 rounded-xl bg-custom-secondary border border-custom text-sm focus:outline-none focus:border-black dark:focus:border-white"></textarea>
+    </div>
+
+    <button type="submit" id="submit-btn" class="w-full py-3.5 rounded-xl font-semibold bg-black text-white dark:bg-white dark:text-black hover:opacity-90 transition flex items-center justify-center gap-2 shadow-md touch-target text-sm">
+        <i class="fa-solid fa-paper-plane text-xs"></i> <span data-i18n="btn_submit_form">Kanda hano wandikishe umwana</span>
+    </button>
+</form>    </section>
+
+    <!-- SUCCESS ENROLLMENT SUMMARY MODAL -->
+    <div id="enrollment-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden">
+        <div class="bg-custom-card border border-custom rounded-2xl sm:rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-custom pb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-black text-white dark:bg-white dark:text-black flex items-center justify-center shrink-0"><i class="fa-solid fa-circle-check text-sm"></i></div>
+                    <h3 class="text-lg font-bold font-serif" data-i18n="modal_success_title">Ubusabe Bwoherejwe Neza!</h3>
+                </div>
+                <button onclick="closeEnrollmentModal()" class="text-custom-muted hover:text-black dark:hover:text-white p-2 touch-target" aria-label="Close"><i class="fa-solid fa-xmark text-base"></i></button>
+            </div>
+
+            <p class="text-xs sm:text-sm text-custom-muted leading-relaxed">
+                <span data-i18n="modal_success_desc">Ubusabe bwo kwandikisha umwana wawe bwoherejwe mu buryo buziguye kuri Email y'Itorero:</span> <strong id="modal-dispatched-email">praisedaniel370@gmail.com</strong>.
+            </p>
+
+            <div class="bg-custom-secondary p-4 rounded-xl border border-custom text-xs space-y-2">
+                <div class="flex justify-between gap-2"><span class="text-custom-muted" data-i18n="lbl_child_name">Amazina y'umwana:</span> <strong id="modal-child-name" class="font-bold text-right"></strong></div>
+                <div class="flex justify-between gap-2"><span class="text-custom-muted" data-i18n="lbl_child_age">Imyaka y'umwana:</span> <strong id="modal-child-age" class="font-bold text-right"></strong></div>
+                <div class="flex justify-between gap-2"><span class="text-custom-muted" data-i18n="lbl_parent_name">Amazina y'umubyeyi:</span> <strong id="modal-parent-name" class="font-bold text-right"></strong></div>
+                <div class="flex justify-between gap-2"><span class="text-custom-muted" data-i18n="lbl_phone">Telefone / WhatsApp:</span> <strong id="modal-parent-phone" class="font-bold text-right"></strong></div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 pt-1">
+                <button onclick="closeEnrollmentModal()" class="w-full py-3 rounded-xl border border-custom font-semibold text-xs transition touch-target" data-i18n="btn_close">Funga</button>
+                <a id="modal-whatsapp-confirm" href="#" target="_blank" class="w-full py-3 rounded-xl bg-black text-white dark:bg-white dark:text-black font-semibold text-xs text-center flex items-center justify-center gap-1.5 transition touch-target">
+                    <i class="fa-brands fa-whatsapp text-sm"></i> <span data-i18n="btn_notify_wa">Menyesha Kuri WhatsApp</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FLOATING WHATSAPP CHAT BUBBLE -->
+    <div class="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-40">
+        <div id="whatsapp-popover" class="hidden mb-3.5 w-72 sm:w-80 bg-custom-card rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden border border-custom transition-all">
+            <div class="bg-black text-white p-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full border border-white/30 flex items-center justify-center text-base shrink-0"><i class="fa-brands fa-whatsapp text-white"></i></div>
+                    <div>
+                        <h4 class="font-bold text-sm leading-tight text-white">Agasaro WhatsApp</h4>
+                        <span class="text-[11px] text-zinc-300 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Director Online
+                        </span>
+                    </div>
+                </div>
+                <button onclick="toggleWhatsAppPopover()" class="text-white hover:opacity-80 p-1.5 touch-target"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-4 text-xs text-custom-muted space-y-3 bg-custom-secondary">
+                <div class="p-3 rounded-xl bg-custom-card border border-custom leading-relaxed" data-i18n="wa_popover_msg">
+                    Muraho! Wifuza kwandikisha umwana wawe mu ngando yacu y’imbyino gakondo? Twandikire hano kuri WhatsApp.
+                </div>
+                <a id="whatsapp-direct-link" href="#" target="_blank" rel="noopener" class="block w-full text-center py-3 rounded-xl bg-black text-white dark:bg-white dark:text-black font-semibold transition flex items-center justify-center gap-2 touch-target">
+                    <i class="fa-brands fa-whatsapp text-sm"></i> <span data-i18n="wa_btn_link">Twandikire kuri WhatsApp</span>
+                </a>
+            </div>
+        </div>
+
+        <button onclick="toggleWhatsAppPopover()" class="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-black text-white dark:bg-white dark:text-black border border-custom shadow-2xl flex items-center justify-center transition transform hover:scale-105 active:scale-95 touch-target" aria-label="WhatsApp Contact">
+            <i class="fa-brands fa-whatsapp text-2xl"></i>
+        </button>
+    </div>
+
+    <!-- MODERN ARCHITECTURAL FOOTER -->
+    <footer class="relative bg-custom-card border-t border-custom overflow-hidden">
+        <!-- Top accent line (black in light mode, white in dark mode) -->
+        <div class="h-px w-full bg-black dark:bg-white"></div>
+
+        <div class="site-container pt-14 sm:pt-16 lg:pt-20 pb-10 sm:pb-12">
+            <!-- Top Editorial Call-to-Action Strip -->
+            <div class="rounded-2xl sm:rounded-3xl border border-custom bg-custom-secondary/80 p-6 sm:p-8 lg:p-10 mb-12 sm:mb-14 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 shadow-sm">
+                <div class="space-y-2 max-w-2xl">
+                    <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-custom-muted">
+                        <span class="w-1.5 h-1.5 rounded-full bg-black dark:bg-white"></span>
+                        <span data-i18n="about_tag">Buri rugo rugire Intore</span>
+                    </div>
+                    <h3 class="text-xl sm:text-2xl lg:text-3xl font-serif font-bold tracking-tight" data-i18n="hero_title_1">
+                        Tuzamura Impano z'abana
+                    </h3>
+                    <p class="text-xs sm:text-sm text-custom-muted leading-relaxed" data-i18n="footer_schedule_desc">
+                        Amahugurwa y'abana aba mu biruhuko bikuru by'amashuri. Buri mwana aterwa kumenya umuco gakondo w'u Rwanda.
+                    </p>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto shrink-0">
+                    <a href="#contact" class="px-6 py-3.5 rounded-xl bg-black text-white dark:bg-white dark:text-black font-semibold text-xs sm:text-sm text-center hover:opacity-90 transition shadow-sm touch-target flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-user-plus text-xs"></i>
+                        <span data-i18n="nav_enroll_btn">Andikisha Umwana Ubu</span>
+                    </a>
+                    <a href="#videos" class="px-6 py-3.5 rounded-xl border border-custom bg-custom-card font-semibold text-xs sm:text-sm text-center hover:bg-custom-secondary transition touch-target flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-play text-xs"></i>
+                        <span data-i18n="hero_cta_videos">Reba amashusho</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Main Footer Navigation & Identity Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-8 sm:gap-10 pb-12 border-b border-custom">
+                <!-- Brand Column -->
+                <div class="lg:col-span-4 space-y-4">
+                    <a href="#home" class="inline-flex items-center gap-3 group">
+                        <div class="w-10 h-10 rounded-xl border border-custom bg-black text-white dark:bg-white dark:text-black flex items-center justify-center font-bold text-base shrink-0 group-hover:scale-105 transition">
+                            <i class="fa-solid fa-drum"></i>
+                        </div>
+                        <div>
+                            <span class="text-lg font-serif font-bold uppercase tracking-tight block leading-none">Agasaro Ballet</span>
+                            <span class="text-[11px] uppercase tracking-widest text-custom-muted block mt-1" data-i18n="nav_subtitle">Itorero ry'imbyino gakondo</span>
+                        </div>
+                    </a>
+                    <p class="text-xs sm:text-sm text-custom-muted leading-relaxed max-w-sm" data-i18n="footer_bio">
+                        Itorero ry'imbyino gakondo ry'abana bato (Imyaka 2-15) ritorezwa i Byumba, Gicumbi ku kibuga cya Basketball. Dutoza umuco, indangagaciro, n'ubuhanga mu mbyino za Kinyarwanda.
+                    </p>
+                    <div class="flex items-center gap-2.5 pt-1">
+                        <a href="https://www.instagram.com/p/DbY6efEiJM9/?igsh=MTg2djE5MTY1MWVnNw==" target="_blank" rel="noopener" class="w-10 h-10 rounded-xl border border-custom bg-custom-secondary flex items-center justify-center hover:border-black dark:hover:border-white transition touch-target min-h-0 min-w-0" aria-label="Instagram">
+                            <i class="fa-brands fa-instagram text-sm"></i>
+                        </a>
+                        <a href="https://www.tiktok.com/@agasaro.ballet2?_r=1&_t=ZS-98RfRoWocnX" target="_blank" rel="noopener" class="w-10 h-10 rounded-xl border border-custom bg-custom-secondary flex items-center justify-center hover:border-black dark:hover:border-white transition touch-target min-h-0 min-w-0" aria-label="TikTok">
+                            <i class="fa-brands fa-tiktok text-sm"></i>
+                        </a>
+                        <a href="https://youtube.com/@Agasaroballetgicumbi" target="_blank" rel="noopener" class="w-10 h-10 rounded-xl border border-custom bg-custom-secondary flex items-center justify-center hover:border-black dark:hover:border-white transition touch-target min-h-0 min-w-0" aria-label="YouTube">
+                            <i class="fa-brands fa-youtube text-sm"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Quick Links Column -->
+                <div class="lg:col-span-2 space-y-3.5">
+                    <h4 class="text-xs font-bold uppercase tracking-widest text-custom-muted" data-i18n="footer_links_title">Amashakiro</h4>
+                    <ul class="space-y-2.5 text-xs sm:text-sm">
+                        <li><a href="#home" class="text-custom-muted hover:text-black dark:hover:text-white transition inline-flex items-center gap-1.5" data-i18n="nav_home">Ahabanza</a></li>
+                        <li><a href="#about" class="text-custom-muted hover:text-black dark:hover:text-white transition inline-flex items-center gap-1.5" data-i18n="nav_about">Ibisobanuro</a></li>
+                        <li><a href="#holidays" class="text-custom-muted hover:text-black dark:hover:text-white transition inline-flex items-center gap-1.5" data-i18n="nav_holidays">Ibikorwa</a></li>
+                        <li><a href="#videos" class="text-custom-muted hover:text-black dark:hover:text-white transition inline-flex items-center gap-1.5" data-i18n="nav_videos">Amashusho</a></li>
+                        <li><a href="#contact" class="text-custom-muted hover:text-black dark:hover:text-white transition inline-flex items-center gap-1.5" data-i18n="nav_enroll">Iyandikishe</a></li>
+                    </ul>
+                </div>
+
+                <!-- Age Groups Column -->
+                <div class="lg:col-span-3 space-y-3.5">
+                    <h4 class="text-xs font-bold uppercase tracking-widest text-custom-muted" data-i18n="footer_schedule_title">Dutoza abana mu byiciro</h4>
+                    <ul class="space-y-2.5 text-xs sm:text-sm text-custom-muted">
+                        <li class="flex items-center justify-between py-1 border-b border-custom/60">
+                            <span data-i18n="group_a_title">Ibirezi (Imyaka 2–5)</span>
+                            <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-custom-secondary border border-custom">2–5</span>
+                        </li>
+                        <li class="flex items-center justify-between py-1 border-b border-custom/60">
+                            <span data-i18n="group_b_title">Imbuto (Imyaka 6–10)</span>
+                            <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-custom-secondary border border-custom">6–10</span>
+                        </li>
+                        <li class="flex items-center justify-between py-1">
+                            <span data-i18n="group_c_title">Indirirarugamba (11–15)</span>
+                            <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-custom-secondary border border-custom">11–15</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Contact & Location Column -->
+                <div class="lg:col-span-3 space-y-3.5">
+                    <h4 class="text-xs font-bold uppercase tracking-widest text-custom-muted" data-i18n="footer_contact_title">Ku yandi makuru</h4>
+                    <ul class="space-y-3 text-xs sm:text-sm text-custom-muted">
+                        <li class="flex items-start gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-custom-secondary border border-custom flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="fa-solid fa-location-dot text-xs"></i>
+                            </span>
+                            <span class="leading-relaxed" data-i18n="footer_address">Gicumbi, Byumba City, Gacurabwenge (Ku kibuga cya Basketball)</span>
+                        </li>
+                        <li class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-custom-secondary border border-custom flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-phone text-xs"></i>
+                            </span>
+                            <span id="footer-phone" class="font-medium">+250 785 958 022</span>
+                        </li>
+                        <li class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-custom-secondary border border-custom flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-envelope text-xs"></i>
+                            </span>
+                            <span id="footer-email" class="break-all">praisedaniel370@gmail.com</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Bottom Copyright & Utility Bar -->
+            <div class="pt-6 sm:pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-custom-muted">
+                <div class="flex flex-wrap items-center justify-center sm:justify-start gap-3">
+                    <p>&copy; <span id="year">2026</span> Agasaro Ballet. All rights reserved.</p>
+                    <span class="hidden sm:inline">&bull;</span>
+                    <p class="text-[11px] text-custom-muted">Designed & Developed by <a href="https://www.instagram.com/ishimwe439" target="_blank" class="hover:text-black dark:hover:text-white transition">Daniel</a></p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button onclick="promptAdminLogin()" class="hover:text-black dark:hover:text-white transition font-semibold">Admin</button>
+                    <span>&bull;</span>
+                    <a href="#home" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-custom bg-custom-secondary hover:border-black dark:hover:border-white transition font-medium">
+                        <span data-i18n="footer_top">Subirahejuru</span> <i class="fa-solid fa-arrow-up text-[10px]"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- SECURE ADMIN DRAWER PANEL WITH PERMANENT SYNC BUTTON -->
+    <div id="admin-panel" class="fixed inset-y-0 right-0 w-full max-w-md 3xl:max-w-lg bg-custom-card border-l border-custom shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out p-5 sm:p-6 overflow-y-auto">
+        <div class="flex items-center justify-between pb-4 mb-6 border-b border-custom">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-sliders text-base"></i>
+                <h3 class="text-lg font-bold font-serif">Urubuga rw'Admin</h3>
+            </div>
+            <button onclick="toggleAdminPanel()" class="p-2 text-custom-muted hover:text-black dark:hover:text-white rounded-lg touch-target" aria-label="Close Admin Panel"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+
+        <!-- GLOBAL SYNC BUTTON (PROMINENT AT TOP OF ADMIN PANEL) -->
+        <div class="mb-6 p-4 sm:p-5 rounded-2xl border border-black dark:border-white bg-custom-secondary text-center space-y-3 shadow-sm">
+            <div class="flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span>Global Cloud Sync</span>
+            </div>
+            <p class="text-xs text-custom-muted leading-relaxed">Click this button after making edits to immediately publish your changes live to all users worldwide.</p>
+            <button onclick="triggerManualSync()" class="w-full py-3 bg-black hover:bg-zinc-800 text-white dark:bg-white dark:text-black dark:hover:bg-zinc-200 font-semibold rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow touch-target border border-custom">
+                <i class="fa-solid fa-rotate text-xs"></i> Sync Changes Live Globally Now
+            </button>
+        </div>
+
+        <!-- 1. ENROLLMENT COUNTER & EXCEL EXPORT -->
+        <div class="space-y-3 mb-6 p-5 rounded-2xl border border-custom bg-custom-secondary text-center">
+            <span class="text-xs font-semibold uppercase tracking-wider text-custom-muted block">Abana Bandikishijwe Bose</span>
+            <div id="admin-counter-display" class="text-3xl sm:text-4xl font-bold font-serif my-1">0</div>
+            
+            <button onclick="downloadEnrollmentsExcel()" class="w-full py-3 bg-custom-card border border-custom font-semibold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm touch-target hover:border-black dark:hover:border-white">
+                <i class="fa-solid fa-file-excel text-emerald-600 text-sm"></i> Download Excel Report (.xlsx)
+            </button>
+
+            <!-- Admin Enrollment Records Manager / Viewer -->
+            <div id="admin-enrollments-list" class="space-y-2 max-h-44 overflow-y-auto pt-3 border-t border-custom text-left mt-3"></div>
+        </div>
+
+        <!-- 2. CALENDAR EVENT MANAGER -->
+        <div class="space-y-3 mb-6 p-4 rounded-2xl border border-custom bg-custom-secondary">
+            <div class="flex items-center justify-between">
+                <label class="block text-xs font-bold uppercase tracking-wider"><i class="fa-solid fa-calendar-plus mr-1"></i> Calendar Event Manager</label>
+                <span class="text-[10px] bg-custom-card border border-custom px-2 py-0.5 rounded font-mono">Admin</span>
+            </div>
+            <div>
+                <label class="block text-[11px] font-medium text-custom-muted mb-1">Select Date</label>
+                <input id="admin-cal-date-input" type="date" class="w-full px-3 py-2 rounded-xl bg-custom-card border border-custom text-xs focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-[11px] font-medium text-custom-muted mb-1">Event Description</label>
+                <input id="admin-cal-event-input" type="text" placeholder="e.g. 15:00 Practice at Basketball Court" class="w-full px-3 py-2 rounded-xl bg-custom-card border border-custom text-xs focus:outline-none">
+            </div>
+            <button onclick="addCalendarEventFromAdmin()" class="w-full py-2.5 bg-black text-white dark:bg-white dark:text-black font-semibold rounded-xl text-xs transition touch-target">+ Add Calendar Event</button>
+            <div id="admin-cal-events-list" class="space-y-2 max-h-40 overflow-y-auto pt-2 border-t border-custom mt-2"></div>
+        </div>
+
+        <!-- 3. ADVERTISEMENT POSTER MANAGER -->
+        <div class="space-y-3 mb-6 p-4 rounded-2xl border border-custom bg-custom-secondary">
+            <div class="flex items-center justify-between">
+                <label class="block text-xs font-bold uppercase tracking-wider"><i class="fa-solid fa-rectangle-ad mr-1"></i> Popup Announcement</label>
+                <span id="admin-ad-status-badge" class="text-[10px] px-2 py-0.5 rounded font-semibold uppercase bg-zinc-800 text-white">Disabled</span>
+            </div>
+            <div>
+                <label class="block text-[11px] font-medium text-custom-muted mb-1">Upload Poster Image</label>
+                <input id="admin-ad-file" type="file" accept="image/*" class="w-full text-xs text-custom-muted file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border file:border-custom file:text-xs file:font-semibold file:bg-custom-card cursor-pointer">
+            </div>
+            <div class="flex gap-2">
+                <button onclick="uploadAdPosterFromAdmin()" class="w-full py-2.5 bg-black text-white dark:bg-white dark:text-black font-semibold rounded-xl text-xs transition touch-target">Upload Poster</button>
+                <button onclick="toggleAdState()" id="admin-ad-toggle-btn" class="w-full py-2.5 border border-custom font-semibold rounded-xl text-xs transition touch-target">Enable Popup</button>
+            </div>
+            <div id="admin-ad-preview-box" class="hidden pt-2 border-t border-custom">
+                <div class="relative rounded-xl overflow-hidden border border-custom bg-black">
+                    <img id="admin-ad-preview-img" src="" alt="Ad Preview" class="w-full max-h-32 object-contain">
+                    <button onclick="removeAdPoster()" class="absolute top-2 right-2 p-1.5 rounded-lg bg-black text-white text-xs font-bold shadow touch-target min-h-0" title="Remove"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. DIRECTOR CONTACT SETTINGS -->
+        <div class="space-y-3 mb-6 p-4 rounded-2xl border border-custom bg-custom-secondary">
+            <label class="block text-xs font-bold uppercase tracking-wider"><i class="fa-solid fa-address-book mr-1"></i> Director Contact Info</label>
+            <div>
+                <label class="block text-[11px] font-medium text-custom-muted mb-1">Receiving Email</label>
+                <input id="admin-email-input" type="email" placeholder="praisedaniel370@gmail.com" class="w-full px-3 py-2 rounded-xl bg-custom-card border border-custom text-xs focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-[11px] font-medium text-custom-muted mb-1">WhatsApp Phone Number</label>
+                <input id="admin-phone-input" type="text" placeholder="+250 785 958 022" class="w-full px-3 py-2 rounded-xl bg-custom-card border border-custom text-xs focus:outline-none">
+            </div>
+            <button onclick="updateContactSettings()" class="w-full py-2.5 bg-black text-white dark:bg-white dark:text-black font-semibold rounded-xl text-xs transition touch-target">Save Contact Settings</button>
+        </div>
+
+        <!-- 5. YOUTUBE VIDEO MANAGER -->
+        <div class="space-y-3 mb-6 p-4 rounded-2xl border border-custom bg-custom-secondary">
+            <div class="flex items-center justify-between">
+                <label class="block text-xs font-bold uppercase tracking-wider">YouTube Videos</label>
+                <span id="video-count-badge" class="text-[10px] bg-custom-card border border-custom px-2 py-0.5 rounded font-mono">0 Videos</span>
+            </div>
+            <input id="admin-yt-url" type="text" placeholder="YouTube URL or Video ID" class="w-full px-3 py-2 rounded-xl bg-custom-card border border-custom text-xs focus:outline-none">
+            <input id="admin-yt-title" type="text" placeholder="Video Title" class="w-full px-3 py-2 rounded-xl bg-custom-card border border-custom text-xs focus:outline-none">
+            <select id="admin-yt-age" class="w-full px-3 py-2 rounded-xl bg-custom-card border border-custom text-xs focus:outline-none">
+                <option value="2-5 yrs">Imyaka 2-5 (Ibirezi)</option>
+                <option value="6-10 yrs">Imyaka 6-10 (Imbuto)</option>
+                <option value="11-15 yrs">Imyaka 11-15 (Indirirarugamba)</option>
+            </select>
+            <button onclick="addYouTubeVideoFromAdmin()" class="w-full py-2.5 bg-black text-white dark:bg-white dark:text-black font-semibold rounded-xl text-xs transition touch-target">+ Add Video</button>
+            <div id="admin-videos-list" class="space-y-2 max-h-36 overflow-y-auto pt-2"></div>
+        </div>
+
+        <!-- 6. SLIDESHOW MANAGER -->
+        <div class="space-y-3 mb-6 p-4 rounded-2xl border border-custom bg-custom-secondary">
+            <div class="flex items-center justify-between">
+                <label class="block text-xs font-bold uppercase tracking-wider">Slideshow (Max 10)</label>
+                <span id="slide-count-badge" class="text-[10px] bg-custom-card border border-custom px-2 py-0.5 rounded font-mono">0 / 10</span>
+            </div>
+            <input id="admin-local-file" type="file" accept="image/*" class="w-full text-xs text-custom-muted file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border file:border-custom file:text-xs file:font-semibold file:bg-custom-card cursor-pointer">
+            <input id="new-slide-title" type="text" placeholder="Slide Title" class="w-full px-3 py-2 rounded-xl bg-custom-card border border-custom text-xs focus:outline-none">
+            <input id="new-slide-desc" type="text" placeholder="Short Description" class="w-full px-3 py-2 rounded-xl bg-custom-card border border-custom text-xs focus:outline-none">
+            <button onclick="addSlideFromAdmin()" class="w-full py-2.5 bg-black text-white dark:bg-white dark:text-black font-semibold rounded-xl text-xs transition touch-target">+ Upload Slide</button>
+            <div id="admin-slides-list" class="space-y-2 max-h-36 overflow-y-auto pt-2"></div>
+        </div>
+
+        <!-- 7. BRANDING & LOGO MANAGER -->
+        <div class="space-y-3 p-4 rounded-2xl border border-custom bg-custom-secondary">
+            <label class="block text-xs font-bold uppercase tracking-wider">Logo & Branding</label>
+            <input id="admin-logo-file" type="file" accept="image/*" class="w-full text-xs text-custom-muted file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border file:border-custom file:text-xs file:font-semibold file:bg-custom-card cursor-pointer">
+            <input id="admin-title-input" type="text" placeholder="AGASARO BALLET" class="w-full px-3 py-2 rounded-xl bg-custom-card border border-custom text-xs focus:outline-none">
+            <input id="admin-subtitle-input" type="text" placeholder="ITORERO RY'IMBYINO GAKONDO" class="w-full px-3 py-2 rounded-xl bg-custom-card border border-custom text-xs focus:outline-none">
+            <div class="flex gap-2">
+                <button onclick="updateBrandingSettings()" class="w-full py-2.5 bg-black text-white dark:bg-white dark:text-black font-semibold rounded-xl text-xs transition touch-target">Save Branding</button>
+                <button onclick="removeCustomLogo()" class="px-3 py-2.5 border border-custom rounded-xl text-xs font-bold hover:bg-custom-card transition touch-target" title="Remove logo"><i class="fa-solid fa-trash-can"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN LOGIN MODAL WITH SHOW/HIDE PASSWORD TOGGLE -->
+    <div id="admin-login-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden">
+        <div class="bg-custom-card border border-custom rounded-2xl sm:rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-custom pb-3">
+                <h3 class="text-base font-bold font-serif">Admin Portal Login</h3>
+                <button onclick="closeAdminLoginModal()" class="text-custom-muted hover:text-black dark:hover:text-white p-1.5 touch-target"><i class="fa-solid fa-xmark text-base"></i></button>
+            </div>
+            <form onsubmit="verifyAdminPassword(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-custom-muted mb-1.5">Password</label>
+                    <div class="relative">
+                        <input id="admin-password-input" type="password" required placeholder="Enter password" class="w-full pl-4 pr-11 py-3 rounded-xl bg-custom-secondary border border-custom text-xs sm:text-sm focus:outline-none focus:border-black dark:focus:border-white">
+                        <button type="button" onclick="toggleAdminPasswordVisibility()" class="absolute inset-y-0 right-0 px-3.5 flex items-center text-custom-muted hover:text-black dark:hover:text-white transition" aria-label="Toggle Password Visibility">
+                            <i id="admin-password-eye" class="fa-regular fa-eye text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="w-full py-3 bg-black text-white dark:bg-white dark:text-black font-semibold rounded-xl text-xs sm:text-sm touch-target">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed bottom-5 left-5 sm:bottom-6 sm:left-6 z-50 transform -translate-x-[120%] opacity-0 transition-all duration-300 bg-black text-white dark:bg-white dark:text-black border border-custom px-4 sm:px-5 py-3 rounded-xl sm:rounded-2xl shadow-2xl flex items-center gap-3 max-w-[85vw]">
+        <i id="toast-icon" class="fa-solid fa-circle-check shrink-0"></i>
+        <span id="toast-message" class="text-xs sm:text-sm font-medium">Notification</span>
+    </div>
+
+    <!-- MULTILINGUAL DICTIONARY -->
+    <script>
+        const translations = {
+            rw: {
+                top_age: "Imyaka 2 - 15",
+                top_location: "Byumba, Gicumbi | Imyitozo y'abana bato mu biruhuko bikuru",
+                admin_portal_btn: "Admin",
+                nav_subtitle: "Itorero ry'imbyino gakondo",
+        nav_home: "Ahabanza",
+        nav_about: "Ibisobanuro",
+        nav_holidays: "Ibikorwa",
+        nav_videos: "Amashusho",
+        nav_enroll: "Iyandikishe",
+        nav_enroll_btn: "Andikisha umwana",
+        hero_badge: "Itorero ry'Imbyino Gakondo (Imyaka 2–15)",
+        hero_title_1: "Agasaro Ballet ",
+        hero_title_2: "ni iki?",
+        hero_desc: "Agasaro Ballet ni itsinda abana bato batorezwamo umuco nyarwanda batarama Kinyarwanda (Kubyina imbyino gakondo, kuririmba, kuvuza ingoma, ibyivugo, n'amateka). Batozwa mu biruhuko bikuru.",
+        hero_cta_enroll: "Andikisha Umwana Ubu",
+        hero_cta_videos: "Reba amashusho",
+        about_tag: "Buri rugo rugire Intore",
+        about_title: "Umuco wacu, Ishema ryacu",
+        group_a_title: "Ibirezi (Imyaka 2–5)",
+        group_a_desc: "Twigisha ibirezi kugenda buhoro no kubyina mu njyana z'umuziki, twigisha abana gutega amaboko by'ibanze, no gukurikiza injyana neza.",
+        group_b_title: "Imbuto (Imyaka 6–10)",
+        group_b_desc: "Twigisha imbuto imyanya myiza n'umushagiriro ku bakobwa, n'imisimbuko y'intore ku bahungu.",
+        group_c_title: "Indirirarugamba (Imyaka 11–15)",
+        group_c_desc: "Tubigisha imbyino gakondo mu buryo bwuzuye, guhuza injyana n’ingoma za kinyarwanda.",
+        term3_title: "Ibikorwa by'Igihembwe cya 3",
+        term3_subtitle: "Mu biruhuko bikuru by'igihembwe cya 3, abana bacu bakora ibikorwa bitandukanye bizamura impano zabo n'ubumenyi bw'umuco nyarwanda.",
+        term3_act1_title: "Imbyino n'Ingoma",
+        term3_act1_desc: "Kwiga neza kubyina umushagiriro, imisimbuko y'intore, guhuza intambwe n'ingoma n'amajwi y'ubusizi.",
+        term3_act1_2: "Ibyivugo & Amateka",
+        term3_act2_desc: "Gutoza abana gutinyuka mu ruhame, kuririmba indirimbo gakondo, n'amateka meza y'umuco w'u Rwanda.",
+        term3_act3_title: "Ibitaramo n'Imyiyereko",
+        term3_act3_desc: "Kugaragaza impano mu bitaramo bitegurwa ku mpera z'ibiruhuko by'igihembwe cya 3, no kwerekana imyiyereko y'imbyino gakondo.",
+        term3_act4_title: "Ubusabane",
+        term3_act4_desc: "Kurema ubumwe mu bana bato, kubaha abakuru n'ubupfura buranga Intore byahamye.",
+        video_tag: "Reba amashusho",
+        video_title: "Imbyino z'abana",
+        filter_all: "Amashusho yose",
+        filter_2_5: "Imyaka 2-5",
+        filter_6_10: "Imyaka 6-10",
+        filter_11_15: "Imyaka 11-15",
+        enroll_tag: "Andikisha umwana wawe muri Agasaro Ballet",
+        enroll_title: "Mukeneye andi makuru mwabariza hano",
+        enroll_desc: "Babyeyi, Hasi/Iburyo hari ifishi yuzuzwa n'umubyeyi cyangwa umurezi w'umwana. Nyamuneka mwuzuze neza amakuru yose asabwa.",
+        location_label: "Aho twitoreza",
+        location_val: "Gicumbi, Byumba City, Gacurabwenge",
+        cal_title: "Kalendari y'Ibyatanzwe",
+        director_phone_label: "Nimero y'umuyobozi w'Agasaro Ballet",
+        lbl_parent_name: "Izina ry'umubyeyi *",
+        lbl_parent_email: "Email y'umubyeyi *",
+        lbl_child_name: "Izina ry'umwana *",
+        lbl_child_age: "Imyaka y'umwana (2–15) *",
+        opt_select_age: "Hitamo imyaka y'umwana",
+        age_2: "Imyaka 2", age_3: "Imyaka 3", age_4: "Imyaka 4", age_5: "Imyaka 5",
+        age_6: "Imyaka 6", age_7: "Imyaka 7", age_8: "Imyaka 8", age_9: "Imyaka 9",
+        age_10: "Imyaka 10", age_11: "Imyaka 11", age_12: "Imyaka 12", age_13: "Imyaka 13",
+        age_14: "Imyaka 14", age_15: "Imyaka 15",
+        ph_parent_name: "Urugero: Alice Umutoni",
+ph_parent_email: "umubyeyi@example.com",
+ph_child_name: "Urugero: Keza Grace",
+ph_phone: "+250 78...",
+ph_notes: "Ubumenyi bw'umwana mu mbyino cyangwa ibindi bikenerwa...",
+        lbl_phone: "Telefone / WhatsApp *",
+        lbl_season: "Igikorwa kifuzwa *",
+        season_opt_1: "Gutozwa mu biruhuko bikuru",
+        season_opt_2: "Gukorerwa mu bitaramo",
+        lbl_notes: "Ibisobanuro Byihariye",
+        btn_submit_form: "Kanda hano wandikishe umwana",
+        modal_success_title: "Ubusabe Bwoherejwe Neza!",
+        modal_success_desc: "Ubusabe bwo kwandikisha umwana wawe bwoherejwe mu buryo buziguye kuri Email y'Itorero:",
+        btn_close: "Funga",
+        btn_notify_wa: "Duhe ubutumwa Kuri WhatsApp",
+        wa_popover_msg: "Muraho! Wifuza kwandikisha umwana wawe mu itsinda ryacu ry’imbyino gakondo? Twandikire hano kuri WhatsApp.",
+        wa_btn_link: "Twandikire kuri WhatsApp",
+        footer_bio: "Itorero ry'imbyino gakondo ry'abana bato (Imyaka 2-15) ritorezwa i Byumba, Gicumbi ku kibuga cya Basketball. Dutoza umuco, indangagaciro, n'ubuhanga mu mbyino za Kinyarwanda.",
+        footer_links_title: "Amashakiro",
+        footer_contact_title: "Ku yandi makuru",
+        footer_address: "Gicumbi, Byumba City, Gacurabwenge (Ku kibuga cya Basketball)",
+        footer_schedule_title: "Dutoza abana mu byiciro",
+        footer_schedule_desc: "Amahugurwa y'abana aba mu biruhuko bikuru by'amashuri. Buri mwana atozwa kumenya umuco gakondo w'u Rwanda.",
+        footer_top: "Subirahejuru",
+        ad_badge: "Ubutumwa bw'Itorero"
+    },
+    en: {
+        top_age: "Ages 2 - 15",
+        top_location: "Byumba, Gicumbi | Children's training during long holidays",
+        admin_portal_btn: "Admin",
+        nav_subtitle: "Traditional dance troupe",
+        nav_home: "Home",
+        nav_about: "About Us",
+        nav_holidays: "Activities",
+        nav_videos: "Gallery",
+        nav_enroll: "Enrollment",
+        nav_enroll_btn: "Enroll child",
+        hero_badge: "Traditional Dance Troupe (Ages 2–15)",
+        hero_title_1: "What is",
+        hero_title_2: "Agasaro Ballet?",
+        hero_desc: "Agasaro Ballet is a group where young children are trained in Rwandan culture and performance (traditional dance, singing, drumming, poetry, and history). They train during long holidays.",
+        hero_cta_enroll: "Enroll Child Now",
+        hero_cta_videos: "Watch Videos",
+        about_tag: "Every Household Should Have an Intore",
+        about_title: "Our Culture, Our Pride",
+        group_a_title: "Ibirezi (Ages 2–5)",
+        group_a_desc: "We teach toddlers slow movement and dancing to musical rhythms, basic hand positioning, and following the rhythm properly.",
+        group_b_title: "Imbuto (Ages 6–10)",
+        group_b_desc: "We teach the Imbuto proper posture and Umushagiriro for girls, and Intore leaping for boys.",
+        group_c_title: "Indirirarugamba (Ages 11–15)",
+        group_c_desc: "We teach them traditional dance completely, synchronizing rhythms with Rwandan drums.",
+        term3_title: "Term 3 Activities",
+        term3_subtitle: "During the long holidays of term 3, our children engage in various activities that enhance their talents and knowledge of Rwandan culture.",
+        term3_act1_title: "Dance & Drums",
+        term3_act1_desc: "Learning to dance Umushagiriro, Intore leaps, synchronizing steps with drums and poetic voices.",
+        term3_act1_2: "Poetry & History",
+        term3_act2_desc: "Training children to gain public speaking confidence, sing traditional songs, and learn the rich history of Rwandan culture.",
+        term3_act3_title: "Performances & Showcases",
+        term3_act3_desc: "Showcasing talent in performances organized at the end of term 3 holidays, and displaying traditional dance exhibitions.",
+        term3_act4_title: "Social Gathering & Unity",
+        term3_act4_desc: "Creating unity among young children, respecting elders, and upholding true Intore discipline and integrity.",
+        video_tag: "Watch Videos",
+        video_title: "Children's Dances",
+        filter_all: "All Videos",
+        filter_2_5: "Ages 2-5",
+        filter_6_10: "Ages 6-10",
+        filter_11_15: "Ages 11-15",
+        enroll_tag: "Enroll your child in Agasaro Ballet",
+        enroll_title: "For any further information, contact us here",
+        enroll_desc: "Parents, below/right there is a form to be filled out by the parent or guardian of the child. Please fill in all requested information accurately.",
+        location_label: "Training Center Location",
+        location_val: "Gicumbi, Byumba City, Gacurabwenge",
+        cal_title: "Calendar of Events",
+        director_phone_label: "Agasaro Ballet Director's Phone Number",
+        lbl_parent_name: "Parent's Full Name *",
+        lbl_parent_email: "Parent's Email *",
+        lbl_child_name: "Child's Full Name *",
+        lbl_child_age: "Child's Age (2–15) *",
+        opt_select_age: "Select child's age",
+        age_2: "2 Years Old", age_3: "3 Years Old", age_4: "4 Years Old", age_5: "5 Years Old",
+        age_6: "6 Years Old", age_7: "7 Years Old", age_8: "8 Years Old", age_9: "9 Years Old",
+        age_10: "10 Years Old", age_11: "11 Years Old", age_12: "12 Years Old", age_13: "13 Years Old",
+        age_14: "14 Years Old", age_15: "15 Years Old",
+        ph_parent_name: "e.g., Alice Umutoni",
+ph_parent_email: "parent@example.com",
+ph_child_name: "e.g., Keza Grace",
+ph_phone: "+250 78...",
+ph_notes: "Child's dance experience or any special requirements...",
+        lbl_phone: "Phone / WhatsApp *",
+        lbl_season: "Desired Program / Session *",
+        season_opt_1: "Training during long holidays",
+        season_opt_2: "Performance showcases",
+        lbl_notes: "Special Notes",
+        btn_submit_form: "Click here to enroll child",
+        modal_success_title: "Request Submitted Successfully!",
+        modal_success_desc: "Your child's enrollment request has been sent directly to the Troupe's Email:",
+        btn_close: "Close",
+        btn_notify_wa: "Notify us on WhatsApp",
+        wa_popover_msg: "Hello! Would you like to enroll your child in our traditional dance group? Message us here on WhatsApp.",
+        wa_btn_link: "Chat on WhatsApp",
+        footer_bio: "Traditional dance troupe for young children (Ages 2-15) trained at Byumba, Gicumbi near the Basketball court. We instill culture, values, and traditional Rwandan dance skills.",
+        footer_links_title: "Quick Links",
+        footer_contact_title: "More Information",
+        footer_address: "Gicumbi, Byumba City, Gacurabwenge (At the Basketball Court)",
+        footer_schedule_title: "We Train Children in Categories",
+        footer_schedule_desc: "Children's training camps take place during school holidays. Every child is trained to know authentic Rwandan culture.",
+        footer_top: "Back to Top",
+        ad_badge: "Troupe Announcement"
+    },
+    fr: {
+        top_age: "Âges 2 - 15 ans",
+        top_location: "Byumba, Gicumbi | Entraînement des enfants pendant les grandes vacances",
+        admin_portal_btn: "Admin",
+        nav_subtitle: "Troupe de danse traditionnelle",
+        nav_home: "Accueil",
+        nav_about: "À propos",
+        nav_holidays: "Activités",
+        nav_videos: "Galerie",
+        nav_enroll: "Inscription",
+        nav_enroll_btn: "Inscrire l'enfant",
+        hero_badge: "Troupe de danse traditionnelle (2–15 ans)",
+        hero_title_1: "Qu'est-ce que",
+        hero_title_2: "l'Agasaro Ballet ?",
+        hero_desc: "Agasaro Ballet est un groupe où les jeunes enfants sont formés à la culture rwandaise et aux arts de la scène (danse traditionnelle, chant, tambour, poésie et histoire). Ils s'entraînent pendant les grandes vacances.",
+        hero_cta_enroll: "Inscrire l'enfant maintenant",
+        hero_cta_videos: "Regarder les vidéos",
+        about_tag: "Que chaque foyer ait un Intore",
+        about_title: "Notre Culture, Notre Fierté",
+        group_a_title: "Ibirezi (2–5 ans)",
+        group_a_desc: "Nous enseignons aux tout-petits des mouvements lents et la danse sur des rythmes musicaux, le positionnement de base des mains et le suivi correct du rythme.",
+        group_b_title: "Imbuto (6–10 ans)",
+        group_b_desc: "Nous enseignons aux Imbuto une bonne posture et l'Umushagiriro pour les filles, ainsi que les sauts Intore pour les garçons.",
+        group_c_title: "Indirirarugamba (11–15 ans)",
+        group_c_desc: "Nous leur enseignons la danse traditionnelle de manière complète, en synchronisant les rythmes avec les tambours rwandais.",
+        term3_title: "Activités du Trimestre 3",
+        term3_subtitle: "Pendant les grandes vacances du trimestre 3, nos enfants participent à diverses activités qui valorisent leurs talents et leur connaissance de la culture rwandaise.",
+        term3_act1_title: "Danse & Tambours",
+        term3_act1_desc: "Apprendre à danser l'Umushagiriro, les sauts Intore, synchroniser les pas avec les tambours et les voix poétiques.",
+        term3_act1_2: "Poésie & Histoire",
+        term3_act2_desc: "Former les enfants à gagner en assurance en public, à chanter des chansons traditionnelles et à connaître la riche histoire de la culture rwandaise.",
+        term3_act3_title: "Spectacles & Défilés",
+        term3_act3_desc: "Présenter les talents lors de spectacles organisés à la fin des vacances du trimestre 3 et présenter des démonstrations de danse traditionnelle.",
+        term3_act4_title: "Fraternité & Unité",
+        term3_act4_desc: "Créer l'unité parmi les jeunes enfants, respecter les aînés et maintenir l'intégrité et la discipline authentique des Intore.",
+        video_tag: "Regarder les vidéos",
+        video_title: "Danses des enfants",
+        filter_all: "Toutes les vidéos",
+        filter_2_5: "2-5 ans",
+        filter_6_10: "6-10 ans",
+        filter_11_15: "11-15 ans",
+        enroll_tag: "Inscrivez votre enfant à Agasaro Ballet",
+        enroll_title: "Pour toute information complémentaire, contactez-nous ici",
+        enroll_desc: "Parents, ci-dessous/à droite se trouve un formulaire à remplir par le parent ou le tuteur de l'enfant. Veuillez remplir avec précision toutes les informations demandées.",
+        location_label: "Lieu des entraînements",
+        location_val: "Gicumbi, Byumba City, Gacurabwenge",
+        cal_title: "Calendrier des événements",
+        director_phone_label: "Numéro de téléphone du directeur d'Agasaro Ballet",
+        lbl_parent_name: "Nom complet du parent *",
+        lbl_parent_email: "Email du parent *",
+        lbl_child_name: "Nom complet de l'enfant *",
+        lbl_child_age: "Âge de l'enfant (2–15) *",
+        opt_select_age: "Sélectionnez l'âge de l'enfant",
+        age_2: "2 ans", age_3: "3 ans", age_4: "4 ans", age_5: "5 ans",
+        age_6: "6 ans", age_7: "7 ans", age_8: "8 ans", age_9: "9 ans",
+        age_10: "10 ans", age_11: "11 ans", age_12: "12 ans", age_13: "13 ans",
+        age_14: "14 ans", age_15: "15 ans",
+        ph_parent_name: "ex. : Alice Umutoni",
+ph_parent_email: "parent@exemple.com",
+ph_child_name: "ex. : Keza Grace",
+ph_phone: "+250 78...",
+ph_notes: "Expérience de l'enfant en danse ou besoins particuliers...",
+        lbl_phone: "Téléphone / WhatsApp *",
+        lbl_season: "Programme / Session souhaité *",
+        season_opt_1: "Entraînement pendant les grandes vacances",
+        season_opt_2: "Prestations lors de spectacles",
+        lbl_notes: "Remarques particulières",
+        btn_submit_form: "Cliquez ici pour inscrire l'enfant",
+        modal_success_title: "Demande envoyée avec succès !",
+        modal_success_desc: "La demande d'inscription de votre enfant a été envoyée directement à l'e-mail de la troupe :",
+        btn_close: "Fermer",
+        btn_notify_wa: "Contactez-nous sur WhatsApp",
+        wa_popover_msg: "Bonjour ! Souhaitez-vous inscrire votre enfant dans notre groupe de danse traditionnelle ? Écrivez-nous ici sur WhatsApp.",
+        wa_btn_link: "Discuter sur WhatsApp",
+        footer_bio: "Troupe de danse traditionnelle pour jeunes enfants (2-15 ans) entraînée à Byumba, Gicumbi près du terrain de basket. Nous inculquons la culture, les valeurs et les compétences de danse traditionnelle rwandaise.",
+        footer_links_title: "Liens Rapides",
+        footer_contact_title: "Plus d'informations",
+        footer_address: "Gicumbi, Byumba City, Gacurabwenge (Au terrain de basketball)",
+        footer_schedule_title: "Nous formons les enfants par catégories",
+        footer_schedule_desc: "Les stages pour enfants ont lieu pendant les vacances scolaires. Chaque enfant est formé à connaître la culture authentique rwandaise.",
+        footer_top: "Haut de page",
+        ad_badge: "Annonce de la Troupe"
+    },
+    
+    }
+
+        
+
+        let currentLang = localStorage.getItem('agasaro_lang') || 'rw';
+
+       // 1. DOMContentLoaded Event Listener
+window.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    startRealtimeClock();
+    
+    // Immediately initialize translations and populate the age dropdown options on load
+    changeLanguage(currentLang);
+    
+    updateBrandingUI();
+    updateContactUI();
+    renderSlides();
+    renderYouTubeGrid();
+    renderAdminSlidesList();
+    renderAdminVideosList();
+    updateAdminCounter();
+    renderSmallCalendar();
+    renderAdminAdUI();
+
+    checkAndTriggerAdModal();
+    const yearEl = document.getElementById('year');
+    if (yearEl) yearEl.textContent = new Date().getFullYear();
+    startAutoPlay();
+});
+
+// 2. Complete changeLanguage Function
+function changeLanguage(lang) {
+    currentLang = lang;
+    localStorage.setItem('agasaro_lang', lang);
+    const langSelector = document.getElementById('lang-selector');
+    if (langSelector) langSelector.value = lang;
+    
+    // Translate standard text elements
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (translations[lang] && translations[lang][key] !== undefined) {
+            el.textContent = translations[lang][key];
+        }
+    });
+
+    // Translate input and textarea placeholders
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (translations[lang] && translations[lang][key] !== undefined) {
+            el.setAttribute('placeholder', translations[lang][key]);
+        }
+    });
+
+    // Translate Desired Program / Session dropdown options
+    const seasonOpt1 = document.querySelector('#form-camp-select option[value="Gutozwa mu biruhuko bikuru"]');
+    if (seasonOpt1 && translations[lang]['season_opt_1']) {
+        seasonOpt1.textContent = translations[lang]['season_opt_1'];
+    }
+
+    const seasonOpt2 = document.querySelector('#form-camp-select option[value="Gukorerwa mu bitaramo"]');
+    if (seasonOpt2 && translations[lang]['season_opt_2']) {
+        seasonOpt2.textContent = translations[lang]['season_opt_2'];
+    }
+
+    // Dynamically populate and translate Child Age dropdown options (Ages 2 to 15)
+    const ageSelect = document.getElementById('form-child-age');
+    if (ageSelect) {
+        const currentValue = ageSelect.value;
+        ageSelect.innerHTML = '';
+
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = '';
+        defaultOpt.disabled = true;
+        defaultOpt.selected = !currentValue;
+        defaultOpt.textContent = translations[lang]['opt_select_age'] || "Hitamo imyaka y'umwana";
+        ageSelect.appendChild(defaultOpt);
+
+        for (let i = 2; i <= 15; i++) {
+            const opt = document.createElement('option');
+            opt.value = String(i);
+            opt.textContent = translations[lang][`age_${i}`] || `Imyaka ${i}`;
+            if (currentValue === String(i)) {
+                opt.selected = true;
+            }
+            ageSelect.appendChild(opt);
+        }
+    }
+}
+
+    </script>
+
+    <!-- CORE JAVASCRIPT & ADMIN LOGIC -->
+    <script>
+        let TROUPE_EMAIL = localStorage.getItem('uruyange_email') || "praisedaniel370@gmail.com";
+        let phoneNumber = localStorage.getItem('uruyange_phone') || "+250 785 958 022";
+        let troupeTitle = localStorage.getItem('uruyange_title') || "AGASARO BALLET";
+        let troupeSubtitle = localStorage.getItem('uruyange_subtitle') || "ITORERO RY'IMBYINO GAKONDO";
+        let customLogo = localStorage.getItem('uruyange_logo') || null;
+
+        let adPosterBase64 = localStorage.getItem('agasaro_ad_poster') || null;
+        let adPosterEnabled = localStorage.getItem('agasaro_ad_enabled') === 'true';
+
+        const defaultSlides = [
+            { url: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=1600&q=80", title: "Junior Intore Warriors (Ages 6-10)", description: "Learning warrior leaps, posture, and cultural pride." },
+            { url: "https://images.unsplash.com/photo-1547153760-18fc86324498?auto=format&fit=crop&w=1600&q=80", title: "Graceful Umushayizero Dancers", description: "Developing poise, rhythm, and traditional harmony." },
+            { url: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=1600&q=80", title: "Royal Drum Syncopation (Ingoma)", description: "Mastering sacred Rwandan rhythms with teamwork." }
+        ];
+
+        const defaultVideos = [
+            { id: "M7lc1UVf-VE", title: "Tiny Tots (2-5 Yrs) Rhythm Steps", ageGroup: "2-5 yrs" },
+            { id: "dQw4w9WgXcQ", title: "Junior Dancers (6-10 Yrs) Camp Showcase", ageGroup: "6-10 yrs" },
+            { id: "L_LUpnjgPso", title: "Senior Youth (11-15 Yrs) Royal Drum Performance", ageGroup: "11-15 yrs" }
+        ];
+
+        let slides = JSON.parse(localStorage.getItem('uruyange_slides')) || defaultSlides;
+        let videos = JSON.parse(localStorage.getItem('uruyange_videos')) || defaultVideos;
+        let paidEnrollments = JSON.parse(localStorage.getItem('agasaro_enrollment_records')) || [
+            { parentName: "Alice Umutoni", parentEmail: "alice@example.com", childName: "Keza Grace", childAge: "7", phone: "+250788112233", season: "Ibiruhuko by'igihembwe cya 3", notes: "First time dancer", timestamp: "2026-06-01 10:30 AM" }
+        ];
+
+        let calendarEvents = JSON.parse(localStorage.getItem('agasaro_calendar_events')) || {
+            "2026-11-01": ["15:00 Practice Session at Basketball Court"],
+            "2026-11-15": ["14:00 Term 3 Cultural Showcase"]
+        };
+        let selectedCalDateKey = new Date().toISOString().slice(0, 10);
+
+        let currentTheme = localStorage.getItem('uruyange_theme') || 'dark';
+        let currentFilter = 'All';
+        let currentSlideIndex = 0;
+        let autoPlayInterval = null;
+        let isAdminLoggedIn = false;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            startRealtimeClock();
+            changeLanguage(currentLang);
+            updateBrandingUI();
+            updateContactUI();
+            renderSlides();
+            renderYouTubeGrid();
+            renderAdminSlidesList();
+            renderAdminVideosList();
+            updateAdminCounter();
+            renderSmallCalendar();
+            renderAdminAdUI();
+
+            checkAndTriggerAdModal();
+            document.getElementById('year').textContent = new Date().getFullYear();
+            startAutoPlay();
+        });
+
+        function startRealtimeClock() {
+            function updateClock() {
+                const now = new Date();
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                const clockEl = document.getElementById('realtime-clock');
+                if (clockEl) clockEl.textContent = `${hours}:${minutes}:${seconds}`;
+            }
+            updateClock();
+            setInterval(updateClock, 1000);
+        }
+
+        function checkAndTriggerAdModal() {
+            if (adPosterEnabled && adPosterBase64) {
+                const imgEl = document.getElementById('ad-poster-img');
+                if (imgEl) {
+                    imgEl.src = adPosterBase64;
+                    setTimeout(() => {
+                        document.getElementById('ad-overlay-modal').classList.remove('hidden');
+                    }, 500);
+                }
+            }
+        }
+
+        function closeAdModal() {
+            document.getElementById('ad-overlay-modal').classList.add('hidden');
+        }
+
+        function uploadAdPosterFromAdmin() {
+    const fileInput = document.getElementById('admin-ad-file');
+    if (fileInput.files && fileInput.files[0]) {
+        compressAndEncodeImage(fileInput.files[0], (base64) => {
+            adPosterBase64 = base64;
+            adPosterEnabled = true;
+            localStorage.setItem('agasaro_ad_poster', adPosterBase64);
+            localStorage.setItem('agasaro_ad_enabled', 'true');
+            renderAdminAdUI();
+            
+            // AUTO-SYNC TO CLOUD INSTANTLY
+            saveToCloudFirestore("Poster uploaded & synced live globally!");
+        });
+    } else {
+        showToast("Please select an image file first", "error");
+    }
+}
+        
+
+        function toggleAdState() {
+            if (!adPosterBase64) {
+                showToast("Please upload a poster first!", "error");
+                return;
+            }
+            adPosterEnabled = !adPosterEnabled;
+            localStorage.setItem('agasaro_ad_enabled', adPosterEnabled ? 'true' : 'false');
+            renderAdminAdUI();
+            
+            // AUTO-SYNC TO CLOUD INSTANTLY
+            saveToCloudFirestore(`Popup ${adPosterEnabled ? 'Enabled' : 'Disabled'} & synced live!`);
+        }
+
+        function removeAdPoster() {
+            adPosterBase64 = null;
+            adPosterEnabled = false;
+            localStorage.removeItem('agasaro_ad_poster');
+            localStorage.removeItem('agasaro_ad_enabled');
+            document.getElementById('admin-ad-file').value = '';
+            renderAdminAdUI();
+            
+            // AUTO-SYNC TO CLOUD INSTANTLY
+            saveToCloudFirestore("Poster removed & synced live globally!");
+        }
+
+        function renderAdminAdUI() {
+            const badge = document.getElementById('admin-ad-status-badge');
+            const toggleBtn = document.getElementById('admin-ad-toggle-btn');
+            const previewBox = document.getElementById('admin-ad-preview-box');
+            const previewImg = document.getElementById('admin-ad-preview-img');
+
+            if (adPosterBase64) {
+                previewBox.classList.remove('hidden');
+                previewImg.src = adPosterBase64;
+            } else {
+                previewBox.classList.add('hidden');
+            }
+
+            if (adPosterEnabled && adPosterBase64) {
+                badge.textContent = 'Enabled';
+                badge.className = 'text-[10px] px-2 py-0.5 rounded font-bold uppercase bg-black text-white dark:bg-white dark:text-black';
+                toggleBtn.textContent = 'Disable Popup';
+            } else {
+                badge.textContent = 'Disabled';
+                badge.className = 'text-[10px] px-2 py-0.5 rounded font-bold uppercase bg-zinc-700 text-zinc-200';
+                toggleBtn.textContent = 'Enable Popup';
+            }
+        }
+
+        function renderSmallCalendar() {
+            const grid = document.getElementById('calendar-days-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth();
+
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            document.getElementById('cal-month-year').textContent = `${monthNames[month]} ${year}`;
+
+            const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
+            const totalDays = new Date(year, month + 1, 0).getDate();
+
+            for (let i = 0; i < firstDayIndex; i++) {
+                const emptySlot = document.createElement('div');
+                emptySlot.className = 'py-1.5 text-transparent';
+                emptySlot.textContent = '-';
+                grid.appendChild(emptySlot);
+            }
+
+            for (let day = 1; day <= totalDays; day++) {
+                const dayBtn = document.createElement('button');
+                const dayStr = String(day).padStart(2, '0');
+                const monthStr = String(month + 1).padStart(2, '0');
+                const dateKey = `${year}-${monthStr}-${dayStr}`;
+
+                const hasEvents = calendarEvents[dateKey] && calendarEvents[dateKey].length > 0;
+                const isSelected = dateKey === selectedCalDateKey;
+                const isToday = day === today.getDate();
+
+                dayBtn.className = `py-1.5 rounded-lg font-semibold transition relative flex flex-col items-center justify-center ${
+                    isSelected ? 'bg-black text-white dark:bg-white dark:text-black font-bold shadow' : 
+                    isToday ? 'border border-black dark:border-white font-bold' : 'hover:bg-custom-secondary text-black dark:text-white'
+                }`;
+
+                dayBtn.innerHTML = `
+                    <span>${day}</span>
+                    ${hasEvents ? `<span class="w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white dark:bg-black' : 'bg-black dark:bg-white'} mt-0.5"></span>` : ''}
+                `;
+
+                dayBtn.onclick = () => {
+                    selectedCalDateKey = dateKey;
+                    renderSmallCalendar();
+                };
+
+                grid.appendChild(dayBtn);
+            }
+
+            renderCalendarEventsList();
+            renderAdminCalendarList();
+        }
+
+        function renderCalendarEventsList() {
+            const list = document.getElementById('cal-events-list');
+            const countEl = document.getElementById('cal-event-count');
+            const labelEl = document.getElementById('cal-selected-date-label');
+            if (!list) return;
+
+            labelEl.textContent = selectedCalDateKey;
+            const events = calendarEvents[selectedCalDateKey] || [];
+            countEl.textContent = `${events.length} event${events.length === 1 ? '' : 's'}`;
+
+            list.innerHTML = '';
+            if (events.length === 0) {
+                list.innerHTML = `<p class="text-[11px] text-custom-muted italic">No events scheduled.</p>`;
+                return;
+            }
+
+            events.forEach((evt) => {
+                const item = document.createElement('div');
+                item.className = 'p-2 rounded-xl bg-custom-secondary border border-custom text-xs font-medium flex items-center gap-2';
+                item.innerHTML = `
+                    <i class="fa-regular fa-clock text-[11px] text-custom-muted shrink-0"></i>
+                    <span class="truncate">${evt}</span>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function addCalendarEventFromAdmin() {
+            const dateInput = document.getElementById('admin-cal-date-input').value;
+            const eventInput = document.getElementById('admin-cal-event-input').value.trim();
+
+            if (!dateInput || !eventInput) {
+                showToast("Please fill date and event text", "error");
+                return;
+            }
+
+            if (!calendarEvents[dateInput]) calendarEvents[dateInput] = [];
+            calendarEvents[dateInput].push(eventInput);
+            localStorage.setItem('agasaro_calendar_events', JSON.stringify(calendarEvents));
+            
+            document.getElementById('admin-cal-event-input').value = '';
+            selectedCalDateKey = dateInput;
+            renderSmallCalendar();
+            
+            // AUTO-SYNC TO CLOUD INSTANTLY
+            saveToCloudFirestore("Calendar event added & synced live!");
+        }
+
+        function removeCalendarEventFromAdmin(dateKey, idx) {
+            if (calendarEvents[dateKey]) {
+                calendarEvents[dateKey].splice(idx, 1);
+                if (calendarEvents[dateKey].length === 0) delete calendarEvents[dateKey];
+                localStorage.setItem('agasaro_calendar_events', JSON.stringify(calendarEvents));
+                renderSmallCalendar();
+                
+                // AUTO-SYNC TO CLOUD INSTANTLY
+                saveToCloudFirestore("Calendar event removed & synced live!");
+            }
+        }
+        
+
+        function renderAdminCalendarList() {
+            const list = document.getElementById('admin-cal-events-list');
+            if (!list) return;
+            list.innerHTML = '';
+
+            const keys = Object.keys(calendarEvents).sort();
+            if (keys.length === 0) {
+                list.innerHTML = `<p class="text-[10px] text-custom-muted italic">No events found.</p>`;
+                return;
+            }
+
+            keys.forEach(dateKey => {
+                calendarEvents[dateKey].forEach((evt, idx) => {
+                    const item = document.createElement('div');
+                    item.className = 'flex items-center justify-between p-2 rounded-xl bg-custom-card border border-custom text-xs gap-2';
+                    item.innerHTML = `
+                        <div class="truncate">
+                            <span class="font-mono text-[10px] font-bold text-custom-muted block">${dateKey}</span>
+                            <span class="font-semibold truncate block">${evt}</span>
+                        </div>
+                        <button onclick="removeCalendarEventFromAdmin('${dateKey}', ${idx})" class="text-custom-muted hover:text-red-500 p-1"><i class="fa-solid fa-trash-can"></i></button>
+                    `;
+                    list.appendChild(item);
+                });
+            });
+        }
+
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            const childNameInput = document.getElementById('form-child-name').value.trim();
+
+            const isDuplicate = paidEnrollments.some(item => item.childName.trim().toLowerCase() === childNameInput.toLowerCase());
+            if (isDuplicate) {
+                showToast(`Umwana witwa "${childNameInput}" yamaze kwiyandikisha!`, "error");
+                return;
+            }
+
+            const submitBtn = document.getElementById('submit-btn');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-xs"></i> <span>Sending...</span>`;
+
+            const formData = {
+                parentName: document.getElementById('form-parent-name').value.trim(),
+                parentEmail: document.getElementById('form-parent-email').value.trim(),
+                childName: childNameInput,
+                childAge: document.getElementById('form-child-age').value,
+                phone: document.getElementById('form-parent-phone').value.trim(),
+                season: document.getElementById('form-camp-select').value,
+                notes: document.getElementById('form-notes').value.trim(),
+                timestamp: new Date().toLocaleString()
+            };
+
+            paidEnrollments.unshift(formData);
+            localStorage.setItem('agasaro_enrollment_records', JSON.stringify(paidEnrollments));
+            updateAdminCounter();
+            if(window.saveToCloudFirestore) window.saveToCloudFirestore("New child enrolled & synced live!");
+            await dispatchEmailDirectly(formData);
+
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+
+            showEnrollmentSummaryModal(formData);
+            document.getElementById('booking-form').reset();
+        }
+
+        async function dispatchEmailDirectly(data) {
+            const primaryEndpoint = `https://formsubmit.co/ajax/${encodeURIComponent(TROUPE_EMAIL)}`;
+            try {
+                await fetch(primaryEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        _subject: `New Enrollment: ${data.childName} (Age ${data.childAge})`,
+                        _replyto: data.parentEmail,
+                        "To Email": TROUPE_EMAIL,
+                        "Parent Name": data.parentName,
+                        "Parent Email": data.parentEmail,
+                        "Child Name": data.childName,
+                        "Child Age": `${data.childAge} Years Old`,
+                        "Phone / WhatsApp": data.phone,
+                        "Holiday Season": data.season,
+                        "Notes": data.notes || "None",
+                        "Submission Time": data.timestamp
+                    })
+                });
+            } catch (err) {
+                console.warn("Email dispatch warning:", err);
+            }
+        }
+
+        function showEnrollmentSummaryModal(data) {
+            document.getElementById('modal-dispatched-email').textContent = TROUPE_EMAIL;
+            document.getElementById('modal-child-name').textContent = data.childName;
+            document.getElementById('modal-child-age').textContent = `${data.childAge} Years Old`;
+            document.getElementById('modal-parent-name').textContent = data.parentName;
+            document.getElementById('modal-parent-phone').textContent = data.phone;
+
+            const cleanPhone = data.phone.replace(/\D/g, '');
+            const waMsg = encodeURIComponent(`Muraho! Namaze kwandikisha umwana ${data.childName} (Age ${data.childAge}) muri Agasaro Ballet.`);
+            document.getElementById('modal-whatsapp-confirm').href = `https://wa.me/${cleanPhone}?text=${waMsg}`;
+            document.getElementById('enrollment-modal').classList.remove('hidden');
+        }
+
+        function closeEnrollmentModal() {
+            document.getElementById('enrollment-modal').classList.add('hidden');
+        }
+
+        function downloadEnrollmentsExcel() {
+            if (paidEnrollments.length === 0) {
+                showToast("No registration records found.", "error");
+                return;
+            }
+
+            const headers = [
+                "S/N",
+                "Parent Name",
+                "Parent Email",
+                "Phone / WhatsApp",
+                "Child Name",
+                "Child Age",
+                "Selected Season",
+                "Special Notes",
+                "Registration Date"
+            ];
+
+            const excelData = paidEnrollments.map((item, index) => ({
+                "S/N": index + 1,
+                "Parent Name": item.parentName || '',
+                "Parent Email": item.parentEmail || '',
+                "Phone / WhatsApp": item.phone || '',
+                "Child Name": item.childName || '',
+                "Child Age": item.childAge ? `${item.childAge} yrs` : '',
+                "Selected Season": item.season || '',
+                "Special Notes": item.notes || '—',
+                "Registration Date": item.timestamp || ''
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(excelData, { header: headers });
+
+            const maxColWidths = {
+                0: 7,
+                1: 26,
+                2: 30,
+                3: 22,
+                4: 26,
+                5: 14,
+                6: 32,
+                7: 42,
+                8: 24
+            };
+
+            const colWidths = headers.map((header, colIdx) => {
+                let longest = header.length;
+                excelData.forEach(row => {
+                    const cellText = String(row[header] ?? '');
+                    const lines = cellText.split(/\r?\n/);
+                    lines.forEach(line => {
+                        if (line.length > longest) longest = line.length;
+                    });
+                });
+                const cap = maxColWidths[colIdx] || 35;
+                return { wch: Math.min(Math.max(longest + 4, 10), cap) };
+            });
+            worksheet['!cols'] = colWidths;
+
+            const rowHeights = [{ hpt: 28 }];
+            excelData.forEach(row => {
+                let maxLines = 1;
+                headers.forEach((header, colIdx) => {
+                    const cellText = String(row[header] ?? '');
+                    const usableWidth = Math.max((colWidths[colIdx].wch || 15) - 3, 8);
+                    const explicitLines = cellText.split(/\r?\n/);
+                    let wrappedLines = 0;
+                    explicitLines.forEach(part => {
+                        wrappedLines += Math.max(1, Math.ceil(part.length / usableWidth));
+                    });
+                    if (wrappedLines > maxLines) maxLines = wrappedLines;
+                });
+                rowHeights.push({ hpt: Math.max(22, maxLines * 16 + 8) });
+            });
+            worksheet['!rows'] = rowHeights;
+
+            const range = XLSX.utils.decode_range(worksheet['!ref']);
+            for (let R = range.s.r; R <= range.e.r; ++R) {
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+                    if (!worksheet[cellAddress]) continue;
+
+                    const isHeader = R === 0;
+                    const isEvenRow = R % 2 === 0;
+
+                    worksheet[cellAddress].s = {
+                        font: {
+                            name: "Calibri",
+                            sz: isHeader ? 11 : 10.5,
+                            bold: isHeader,
+                            color: { rgb: isHeader ? "FFFFFF" : "18181B" }
+                        },
+                        fill: {
+                            fgColor: {
+                                rgb: isHeader ? "18181B" : (isEvenRow ? "F4F4F5" : "FFFFFF")
+                            }
+                        },
+                        alignment: {
+                            vertical: "center",
+                            horizontal: (C === 0 || C === 5) ? "center" : "left",
+                            wrapText: true
+                        },
+                        border: {
+                            top: { style: "thin", color: { rgb: "D4D4D8" } },
+                            bottom: { style: "thin", color: { rgb: "D4D4D8" } },
+                            left: { style: "thin", color: { rgb: "D4D4D8" } },
+                            right: { style: "thin", color: { rgb: "D4D4D8" } }
+                        }
+                    };
+                }
+            }
+
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Enrolled Students");
+            const dateStamp = new Date().toISOString().slice(0, 10);
+            XLSX.writeFile(workbook, `Agasaro_Ballet_Enrollments_${dateStamp}.xlsx`);
+            showToast("Excel report downloaded with auto-fitted cells!");
+        }
+
+        function updateAdminCounter() {
+            const counterEl = document.getElementById('admin-counter-display');
+            if (counterEl) counterEl.textContent = paidEnrollments.length;
+            renderAdminEnrollmentsList();
+        }
+
+        function renderAdminEnrollmentsList() {
+            const list = document.getElementById('admin-enrollments-list');
+            if (!list) return;
+            list.innerHTML = '';
+
+            if (paidEnrollments.length === 0) {
+                list.innerHTML = `<p class="text-[11px] text-custom-muted italic text-center">No enrolled individuals.</p>`;
+                return;
+            }
+
+            paidEnrollments.forEach((item, idx) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'flex items-center justify-between p-2 rounded-xl bg-custom-card border border-custom text-xs gap-2';
+                itemDiv.innerHTML = `
+                    <div class="truncate">
+                        <span class="font-bold block truncate">${item.childName} <span class="font-normal text-custom-muted">(Age ${item.childAge})</span></span>
+                        <span class="text-[10px] text-custom-muted block truncate">Parent: ${item.parentName} | ${item.phone}</span>
+                    </div>
+                    <button onclick="deleteEnrollmentRecord(${idx})" class="text-custom-muted hover:text-red-500 p-1 shrink-0" title="Delete record"><i class="fa-solid fa-trash-can"></i></button>
+                `;
+                list.appendChild(itemDiv);
+            });
+        }
+
+        function deleteEnrollmentRecord(idx) {
+            paidEnrollments.splice(idx, 1);
+            localStorage.setItem('agasaro_enrollment_records', JSON.stringify(paidEnrollments));
+            updateAdminCounter();
+            if(window.saveToCloudFirestore) window.saveToCloudFirestore("Enrollment record deleted & synced live!");
+            showToast("Enrollment record deleted. Click Sync to publish.");
+        }
+
+        function updateContactSettings() {
+            TROUPE_EMAIL = document.getElementById('admin-email-input').value.trim() || TROUPE_EMAIL;
+            phoneNumber = document.getElementById('admin-phone-input').value.trim() || phoneNumber;
+            localStorage.setItem('uruyange_email', TROUPE_EMAIL);
+            localStorage.setItem('uruyange_phone', phoneNumber);
+            updateContactUI();
+            showToast("Contact settings updated locally. Click Sync to publish.");
+        }
+
+        function updateContactUI() {
+            document.getElementById('contact-phone-display').textContent = phoneNumber;
+            document.getElementById('footer-phone').textContent = phoneNumber;
+            document.getElementById('footer-email').textContent = TROUPE_EMAIL;
+            document.getElementById('admin-email-input').value = TROUPE_EMAIL;
+            document.getElementById('admin-phone-input').value = phoneNumber;
+
+            const cleanDigits = phoneNumber.replace(/\D/g, '');
+            document.getElementById('whatsapp-direct-link').href = `https://wa.me/${cleanDigits}?text=Muraho!%20I%20would%20like%20to%20enroll%20my%20child.`;
+        }
+
+        function initTheme() {
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            const icon = document.getElementById('theme-icon');
+            const text = document.getElementById('theme-text');
+            if (currentTheme === 'dark') {
+                icon.className = 'fa-solid fa-sun';
+                if (text) text.textContent = 'Light';
+            } else {
+                icon.className = 'fa-solid fa-moon';
+                if (text) text.textContent = 'Dark';
+            }
+        }
+
+        function toggleTheme() {
+            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('uruyange_theme', currentTheme);
+            initTheme();
+        }
+
+        function extractYouTubeID(urlOrId) {
+            if (!urlOrId) return '';
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = urlOrId.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : urlOrId.trim();
+        }
+
+        function renderYouTubeGrid() {
+            const grid = document.getElementById('youtube-video-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            const filtered = videos.filter(v => currentFilter === 'All' || v.ageGroup === currentFilter);
+            filtered.forEach((vid) => {
+                const ytId = extractYouTubeID(vid.id);
+                const card = document.createElement('div');
+                card.className = 'clean-card rounded-2xl overflow-hidden flex flex-col';
+                card.innerHTML = `
+                    <div class="relative aspect-video bg-black">
+                        <iframe class="w-full h-full" src="https://www.youtube.com/embed/${ytId}" title="${vid.title}" frameborder="0" allowfullscreen loading="lazy"></iframe>
+                    </div>
+                    <div class="p-4 sm:p-5 bg-custom-card flex-1 flex flex-col justify-between">
+                        <div>
+                            <span class="inline-block px-2.5 py-0.5 rounded text-[10px] font-semibold uppercase border border-custom text-custom-muted mb-2">${vid.ageGroup}</span>
+                            <h4 class="text-sm sm:text-base font-bold font-serif line-clamp-2">${vid.title}</h4>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterVideos(cat) { 
+            currentFilter = cat;
+            document.querySelectorAll('.video-filter-btn').forEach(btn => {
+                if (btn.getAttribute('data-filter') === cat) {
+                    btn.className = 'video-filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold border border-custom bg-black text-white dark:bg-white dark:text-black transition touch-target min-h-0';
+                } else {
+                    btn.className = 'video-filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold border border-custom bg-custom-secondary text-custom-muted hover:text-black dark:hover:text-white transition touch-target min-h-0';
+                }
+            });
+            renderYouTubeGrid(); 
+        }
+
+        function addYouTubeVideoFromAdmin() {
+            const rawUrl = document.getElementById('admin-yt-url').value;
+            const title = document.getElementById('admin-yt-title').value.trim() || 'Agasaro Showcase';
+            const ageGroup = document.getElementById('admin-yt-age').value;
+            const ytId = extractYouTubeID(rawUrl);
+            if (!ytId) { showToast("Enter a valid YouTube URL", "error"); return; }
+            videos.unshift({ id: ytId, title, ageGroup });
+            localStorage.setItem('uruyange_videos', JSON.stringify(videos));
+            document.getElementById('admin-yt-url').value = '';
+            document.getElementById('admin-yt-title').value = '';
+            renderYouTubeGrid();
+            renderAdminVideosList();
+            
+            // AUTO-SYNC TO CLOUD INSTANTLY
+            saveToCloudFirestore("Video added & synced live globally!");
+        }
+
+        function deleteVideo(idx) {
+            videos.splice(idx, 1);
+            localStorage.setItem('uruyange_videos', JSON.stringify(videos));
+            renderYouTubeGrid();
+            renderAdminVideosList();
+            
+            // AUTO-SYNC TO CLOUD INSTANTLY
+            saveToCloudFirestore("Video removed & synced live globally!");
+        }
+
+        function renderAdminVideosList() {
+            const list = document.getElementById('admin-videos-list');
+            if (!list) return;
+            list.innerHTML = '';
+            document.getElementById('video-count-badge').textContent = `${videos.length} Videos`;
+            videos.forEach((vid, idx) => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between p-2 rounded-xl bg-custom-card border border-custom text-xs gap-2';
+                item.innerHTML = `
+                    <span class="truncate font-semibold">${vid.title}</span>
+                    <button onclick="deleteVideo(${idx})" class="text-custom-muted hover:text-red-500 p-1"><i class="fa-solid fa-trash-can"></i></button>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function renderSlides() {
+            const wrapper = document.getElementById('slides-wrapper');
+            const indicators = document.getElementById('slide-indicators');
+            if (!wrapper || !indicators) return;
+            wrapper.innerHTML = ''; indicators.innerHTML = '';
+            slides.forEach((slide, idx) => {
+                const slideDiv = document.createElement('div');
+                slideDiv.className = `slide-item ${idx === currentSlideIndex ? 'active' : ''}`;
+                slideDiv.innerHTML = `
+                    <img src="${slide.url}" alt="${slide.title}" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent p-5 sm:p-7 pb-12 sm:pb-14 flex flex-col justify-end text-white">
+                        <h3 class="text-lg sm:text-xl lg:text-2xl font-serif font-bold mb-1 leading-snug">${slide.title}</h3>
+                        <p class="text-xs sm:text-sm text-zinc-300 line-clamp-2">${slide.description}</p>
+                    </div>
+                `;
+                wrapper.appendChild(slideDiv);
+                const dot = document.createElement('button');
+                dot.className = `h-2 rounded-full transition-all ${idx === currentSlideIndex ? 'bg-white w-6' : 'bg-zinc-500 w-2'}`;
+                dot.setAttribute('aria-label', `Slide ${idx + 1}`);
+                dot.onclick = () => { currentSlideIndex = idx; renderSlides(); };
+                indicators.appendChild(dot);
+            });
+        }
+
+        function nextSlide() { currentSlideIndex = (currentSlideIndex + 1) % slides.length; renderSlides(); }
+        function prevSlide() { currentSlideIndex = (currentSlideIndex - 1 + slides.length) % slides.length; renderSlides(); }
+        function startAutoPlay() { autoPlayInterval = setInterval(nextSlide, 6000); }
+
+        function addSlideFromAdmin() {
+            if (slides.length >= 10) { showToast("Maximum 10 slides reached!", "error"); return; }
+            const fileInput = document.getElementById('admin-local-file');
+            const title = document.getElementById('new-slide-title').value.trim() || 'Agasaro Training';
+            const desc = document.getElementById('new-slide-desc').value.trim() || 'Traditional dance preservation.';
+            
+            if (fileInput.files && fileInput.files[0]) {
+                compressAndEncodeImage(fileInput.files[0], (base64) => {
+                    slides.push({ url: base64, title, description: desc });
+                    localStorage.setItem('uruyange_slides', JSON.stringify(slides));
+                    fileInput.value = '';
+                    document.getElementById('new-slide-title').value = '';
+                    document.getElementById('new-slide-desc').value = '';
+                    renderSlides();
+                    renderAdminSlidesList();
+                    
+                    // AUTO-SYNC TO CLOUD INSTANTLY
+                    saveToCloudFirestore("Slide added & synced live globally!");
+                });
+            } else { 
+                showToast("Select an image first!", "error"); 
+            }
+        }
+
+        function deleteSlide(idx) {
+            if (slides.length <= 1) { showToast("At least 1 slide required", "error"); return; }
+            slides.splice(idx, 1);
+            if (currentSlideIndex >= slides.length) currentSlideIndex = 0;
+            localStorage.setItem('uruyange_slides', JSON.stringify(slides));
+            renderSlides();
+            renderAdminSlidesList();
+            
+            // AUTO-SYNC TO CLOUD INSTANTLY
+            saveToCloudFirestore("Slide removed & synced live globally!");
+        }
+        
+
+        function renderAdminSlidesList() {
+            const list = document.getElementById('admin-slides-list');
+            if (!list) return;
+            list.innerHTML = '';
+            document.getElementById('slide-count-badge').textContent = `${slides.length} / 10`;
+            slides.forEach((slide, idx) => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between p-2 rounded-xl bg-custom-card border border-custom text-xs gap-2';
+                item.innerHTML = `
+                    <div class="flex items-center gap-2 truncate">
+                        <img src="${slide.url}" alt="" class="w-7 h-7 rounded object-cover shrink-0">
+                        <span class="truncate font-semibold">${slide.title}</span>
+                    </div>
+                    <button onclick="deleteSlide(${idx})" class="text-custom-muted hover:text-red-500 p-1"><i class="fa-solid fa-trash-can"></i></button>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function compressAndEncodeImage(file, callback) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_W = 1600;
+                    let w = img.width, h = img.height;
+                    if (w > MAX_W) { h = Math.round((h * MAX_W) / w); w = MAX_W; }
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    callback(canvas.toDataURL('image/jpeg', 0.85));
+                };
+            };
+        }
+
+        function updateBrandingSettings() {
+            troupeTitle = document.getElementById('admin-title-input').value.trim() || troupeTitle;
+            troupeSubtitle = document.getElementById('admin-subtitle-input').value.trim() || troupeSubtitle;
+            localStorage.setItem('uruyange_title', troupeTitle);
+            localStorage.setItem('uruyange_subtitle', troupeSubtitle);
+
+            const logoFile = document.getElementById('admin-logo-file').files[0];
+            if (logoFile) {
+                compressAndEncodeImage(logoFile, (base64Logo) => {
+                    customLogo = base64Logo;
+                    localStorage.setItem('uruyange_logo', customLogo);
+                    updateBrandingUI();
+                    showToast("Branding updated locally. Click Sync to publish.");
+                });
+            } else {
+                updateBrandingUI();
+                showToast("Branding updated locally. Click Sync to publish.");
+            }
+        }
+
+        function removeCustomLogo() {
+            customLogo = null;
+            localStorage.removeItem('uruyange_logo');
+            updateBrandingUI();
+            showToast("Logo removed. Click Sync to publish.");
+        }
+
+        function updateBrandingUI() {
+            const logoImg = document.getElementById('site-logo-img');
+            const logoIcon = document.getElementById('site-logo-icon');
+            if (customLogo) {
+                logoImg.src = customLogo; logoImg.classList.remove('hidden'); logoIcon.classList.add('hidden');
+            } else {
+                logoImg.src = ''; logoImg.classList.add('hidden'); logoIcon.classList.remove('hidden');
+            }
+            document.getElementById('site-header-title').innerHTML = troupeTitle;
+            document.getElementById('site-header-subtitle').textContent = troupeSubtitle;
+            document.getElementById('admin-title-input').value = troupeTitle;
+            document.getElementById('admin-subtitle-input').value = troupeSubtitle;
+        }
+
+        async function triggerManualSync() {
+            if (window.saveToCloudFirestore) {
+                await window.saveToCloudFirestore("Changes successfully published live globally!");
+            } else {
+                showToast("Cloud sync initialized successfully!");
+            }
+        }
+
+        function promptAdminLogin() { 
+            if (isAdminLoggedIn) { toggleAdminPanel(); return; } 
+            document.getElementById('admin-login-modal').classList.remove('hidden'); 
+        }
+
+        function closeAdminLoginModal() { 
+            document.getElementById('admin-login-modal').classList.add('hidden'); 
+            const pwdInput = document.getElementById('admin-password-input');
+            const eyeIcon = document.getElementById('admin-password-eye');
+            if (pwdInput) pwdInput.type = 'password';
+            if (eyeIcon) eyeIcon.className = 'fa-regular fa-eye text-sm';
+        }
+
+        function toggleAdminPasswordVisibility() {
+            const pwdInput = document.getElementById('admin-password-input');
+            const eyeIcon = document.getElementById('admin-password-eye');
+            if (!pwdInput || !eyeIcon) return;
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                eyeIcon.className = 'fa-regular fa-eye-slash text-sm';
+            } else {
+                pwdInput.type = 'password';
+                eyeIcon.className = 'fa-regular fa-eye text-sm';
+            }
+        }
+
+        function verifyAdminPassword(e) {
+            e.preventDefault();
+            if (document.getElementById('admin-password-input').value === "admin123") {
+                isAdminLoggedIn = true; 
+                closeAdminLoginModal(); 
+                toggleAdminPanel(); 
+                showToast("Admin access authorized");
+            } else { 
+                showToast("Incorrect Password!", "error"); 
+            }
+        }
+
+        function toggleAdminPanel() { 
+            document.getElementById('admin-panel').classList.toggle('translate-x-full'); 
+        }
+
+        function toggleWhatsAppPopover() { 
+            document.getElementById('whatsapp-popover').classList.toggle('hidden'); 
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = msg;
+            document.getElementById('toast-icon').className = type === 'error' ? 'fa-solid fa-circle-exclamation text-red-400 shrink-0' : 'fa-solid fa-circle-check shrink-0';
+            toast.classList.remove('-translate-x-[120%]', 'opacity-0');
+            setTimeout(() => toast.classList.add('-translate-x-[120%]', 'opacity-0'), 3500);
+        }
+
+        function toggleMobileMenu() { 
+            document.getElementById('mobile-menu').classList.toggle('hidden'); 
+        }
+    </script>
+</body>
+</html>
