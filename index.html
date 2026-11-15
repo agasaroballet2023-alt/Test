@@ -2017,90 +2017,34 @@ function changeLanguage(lang) {
         function startAutoPlay() { autoPlayInterval = setInterval(nextSlide, 6000); }
 
         function addSlideFromAdmin() {
-            if (slides.length >= 10) { 
-                showToast("Maximum 10 slides reached!", "error"); 
-                return; 
-            }
-            
+            if (slides.length >= 10) { showToast("Maximum 10 slides reached!", "error"); return; }
             const fileInput = document.getElementById('admin-local-file');
             const title = document.getElementById('new-slide-title').value.trim() || 'Agasaro Training';
             const desc = document.getElementById('new-slide-desc').value.trim() || 'Traditional dance preservation.';
             
             if (fileInput.files && fileInput.files[0]) {
-                const file = fileInput.files[0];
-                showToast("Compressing slide image...", "info");
-                
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    const img = new Image();
-                    img.onload = function () {
-                        // Create a canvas to resize the image down for web & database optimization
-                        const canvas = document.createElement('canvas');
-                        let width = img.width;
-                        let height = img.height;
-                        
-                        // Max dimension constraints to keep file size lightweight
-                        const MAX_WIDTH = 1200;
-                        const MAX_HEIGHT = 900;
-                        
-                        if (width > height) {
-                            if (width > MAX_WIDTH) {
-                                height = Math.round((height * MAX_WIDTH) / width);
-                                width = MAX_WIDTH;
-                            }
-                        } else {
-                            if (height > MAX_HEIGHT) {
-                                width = Math.round((width * MAX_HEIGHT) / height);
-                                height = MAX_HEIGHT;
-                            }
-                        }
-                        
-                        canvas.width = width;
-                        canvas.height = height;
-                        
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        
-                        // Compress to JPEG with 0.75 quality to guarantee small Firestore size
-                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
-                        
-                        slides.push({ url: compressedBase64, title, description: desc });
-                        localStorage.setItem('uruyange_slides', JSON.stringify(slides));
-                        
-                        fileInput.value = '';
-                        document.getElementById('new-slide-title').value = '';
-                        document.getElementById('new-slide-desc').value = '';
-                        
-                        renderSlides();
-                        renderAdminSlidesList();
-                        
-                        // AUTO-SYNC TO CLOUD INSTANTLY
-                        saveToCloudFirestore("Slide compressed, added & synced live globally!");
-                    };
-                    img.onerror = function () {
-                        showToast("Failed to load image file.", "error");
-                    };
-                    img.src = e.target.result;
-                };
-                reader.onerror = function () {
-                    showToast("Failed to read file.", "error");
-                };
-                reader.readAsDataURL(file);
+                compressAndEncodeImage(fileInput.files[0], (base64) => {
+                    slides.push({ url: base64, title, description: desc });
+                    localStorage.setItem('uruyange_slides', JSON.stringify(slides));
+                    fileInput.value = '';
+                    document.getElementById('new-slide-title').value = '';
+                    document.getElementById('new-slide-desc').value = '';
+                    renderSlides();
+                    renderAdminSlidesList();
+                    
+                    // AUTO-SYNC TO CLOUD INSTANTLY
+                    saveToCloudFirestore("Slide added & synced live globally!");
+                });
             } else { 
                 showToast("Select an image first!", "error"); 
             }
         }
 
         function deleteSlide(idx) {
-            if (slides.length <= 1) { 
-                showToast("At least 1 slide required", "error"); 
-                return; 
-            }
-            
+            if (slides.length <= 1) { showToast("At least 1 slide required", "error"); return; }
             slides.splice(idx, 1);
             if (currentSlideIndex >= slides.length) currentSlideIndex = 0;
             localStorage.setItem('uruyange_slides', JSON.stringify(slides));
-            
             renderSlides();
             renderAdminSlidesList();
             
@@ -2108,7 +2052,6 @@ function changeLanguage(lang) {
             saveToCloudFirestore("Slide removed & synced live globally!");
         }
         
-
         function renderAdminSlidesList() {
             const list = document.getElementById('admin-slides-list');
             if (!list) return;
