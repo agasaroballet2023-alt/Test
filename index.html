@@ -1414,23 +1414,28 @@ function changeLanguage(lang) {
         }
 
         function uploadAdPosterFromAdmin() {
-    const fileInput = document.getElementById('admin-ad-file');
-    if (fileInput.files && fileInput.files[0]) {
-        compressAndEncodeImage(fileInput.files[0], (base64) => {
-            adPosterBase64 = base64;
-            adPosterEnabled = true;
-            localStorage.setItem('agasaro_ad_poster', adPosterBase64);
-            localStorage.setItem('agasaro_ad_enabled', 'true');
-            renderAdminAdUI();
-            
-            // AUTO-SYNC TO CLOUD INSTANTLY
-            saveToCloudFirestore("Poster uploaded & synced live globally!");
-        });
-    } else {
-        showToast("Please select an image file first", "error");
-    }
-}
-        
+            const fileInput = document.getElementById('admin-ad-file');
+            if (fileInput.files && fileInput.files[0]) {
+                showToast("Compressing poster image...", "info");
+                compressAndEncodeImage(fileInput.files[0], (base64) => {
+                    if (!base64) {
+                        showToast("Image compression failed!", "error");
+                        return;
+                    }
+                    adPosterBase64 = base64;
+                    adPosterEnabled = true;
+                    localStorage.setItem('agasaro_ad_poster', adPosterBase64);
+                    localStorage.setItem('agasaro_ad_enabled', 'true');
+                    renderAdminAdUI();
+                    
+                    // AUTO-SYNC TO CLOUD INSTANTLY WITH FEEDBACK
+                    console.log("Uploading ad poster to Firestore...");
+                    saveToCloudFirestore("Poster uploaded & synced live globally!");
+                });
+            } else {
+                showToast("Please select an image file first", "error");
+            }
+        }
 
         function toggleAdState() {
             if (!adPosterBase64) {
@@ -1441,7 +1446,6 @@ function changeLanguage(lang) {
             localStorage.setItem('agasaro_ad_enabled', adPosterEnabled ? 'true' : 'false');
             renderAdminAdUI();
             
-            // AUTO-SYNC TO CLOUD INSTANTLY
             saveToCloudFirestore(`Popup ${adPosterEnabled ? 'Enabled' : 'Disabled'} & synced live!`);
         }
 
@@ -1453,7 +1457,6 @@ function changeLanguage(lang) {
             document.getElementById('admin-ad-file').value = '';
             renderAdminAdUI();
             
-            // AUTO-SYNC TO CLOUD INSTANTLY
             saveToCloudFirestore("Poster removed & synced live globally!");
         }
 
